@@ -55,6 +55,8 @@ func (r *Request) CallHTTP() error {
 
 func RespDisplay(resp *http.Response) error {
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
+	fmt.Println(string(color.ColorBlue), "Response details : ", string(color.ColorReset))
+	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	status := fmt.Sprintf("Status : %v", resp.Status)
 	statusCode := fmt.Sprintf("Status code : %v", resp.StatusCode)
 	proto := fmt.Sprintf("Protocol : %v", resp.Proto)

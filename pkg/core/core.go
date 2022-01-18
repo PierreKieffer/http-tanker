@@ -126,6 +126,8 @@ Display request
 func (db *Database) Display(requestName string) error {
 	r := db.Data[requestName]
 	fmt.Println("")
+	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
+	fmt.Println(string(color.ColorBlue), "Request details : ", string(color.ColorReset))
 	name := fmt.Sprintf("Name : %s", r.Name)
 	method := fmt.Sprintf("Method : %s", r.Method)
 	url := fmt.Sprintf("URL : %s", r.URL)

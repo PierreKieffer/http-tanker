@@ -14,8 +14,9 @@ type App struct {
 }
 
 type Signal struct {
-	Meta string
-	Sig  string
+	Meta    string
+	Sig     string
+	Display bool
 }
 
 /*
@@ -45,11 +46,11 @@ func (app *App) Run() {
 			case "Home":
 				go app.Home()
 			default:
-				go app.Request(sig.Meta)
+				go app.Request(sig.Meta, sig.Display)
 			}
 
 		case "reqCreate":
-			go app.Request(sig.Meta)
+			go app.Request(sig.Meta, sig.Display)
 		case "Delete":
 			go app.Delete(sig.Meta)
 
@@ -67,8 +68,8 @@ func (app *App) Home() error {
 		{
 			Name: "home",
 			Prompt: &survey.Select{
-				Message: "---- Home Menu ----",
-				Options: []string{"Requests", "Create request", "Options", "Home", "Exit"},
+				Message: fmt.Sprintf("---- Home Menu ----"),
+				Options: []string{"Requests", "Create request", "Exit"},
 			},
 			Validate: survey.Required,
 		},
@@ -128,8 +129,9 @@ func (app *App) Requests() error {
 	}
 
 	sig := Signal{
-		Sig:  "reqSelect",
-		Meta: answers.Requests,
+		Sig:     "reqSelect",
+		Meta:    answers.Requests,
+		Display: true,
 	}
 
 	app.SigChan <- sig
@@ -141,7 +143,7 @@ func (app *App) Requests() error {
 Request
 Display options after selecting a request
 */
-func (app *App) Request(reqName string) error {
+func (app *App) Request(reqName string, display bool) error {
 
 	var menu = []*survey.Question{
 		{
@@ -157,7 +159,9 @@ func (app *App) Request(reqName string) error {
 		Request string
 	}{}
 
-	app.Database.Display(reqName)
+	if display {
+		app.Database.Display(reqName)
+	}
 
 	err := survey.Ask(menu, &answers)
 
@@ -193,8 +197,9 @@ func (app *App) RunRequest(reqName string) error {
 		return err
 	}
 	sig := Signal{
-		Meta: reqName,
-		Sig:  "reqSelect",
+		Meta:    reqName,
+		Sig:     "reqSelect",
+		Display: false,
 	}
 	app.SigChan <- sig
 	return nil
@@ -321,8 +326,9 @@ func (app *App) Create() error {
 	}
 
 	sig := Signal{
-		Sig:  "reqCreate",
-		Meta: genericAnswer.Name,
+		Sig:     "reqCreate",
+		Meta:    genericAnswer.Name,
+		Display: true,
 	}
 
 	// Build Request object
@@ -407,12 +413,9 @@ func (app *App) Delete(reqName string) error {
 
 	switch answers.ConfirmDelete {
 	case true:
-		delete(app.Database.Data, reqName)
-		app.Database.Save()
-		app.Database.Load()
-
+		app.Database.Delete(reqName)
 		fmt.Printf("The request %v has been successfully deleted\n", reqName)
-		fmt.Println()
+		fmt.Println("")
 	}
 
 	sig := Signal{

@@ -5,11 +5,15 @@ import (
 	"fmt"
 	surveyCore "github.com/AlecAivazis/survey/v2/core"
 	"github.com/PierreKieffer/http-tanker/pkg/cli"
+	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"github.com/PierreKieffer/http-tanker/pkg/core"
 	"github.com/mgutz/ansi"
-	"os"
+	"io/ioutil"
 	"os/user"
-	"strings"
+)
+
+var (
+	version string = "edge"
 )
 
 func init() {
@@ -17,7 +21,7 @@ func init() {
 	surveyCore.TemplateFuncsWithColor["color"] = func(style string) string {
 		switch style {
 		case "white":
-			if Is256ColorSupported() {
+			if color.Is256ColorSupported() {
 				return fmt.Sprintf("\x1b[%d;5;%dm", 38, 242)
 			} else {
 				return ansi.ColorCode("default")
@@ -26,6 +30,11 @@ func init() {
 			return ansi.ColorCode(style)
 		}
 	}
+
+	bannerBuffer, _ := ioutil.ReadFile("banner.txt")
+	fmt.Println(string(bannerBuffer))
+	fmt.Println(string(color.ColorGrey), fmt.Sprintf("  version : %v", version), string(color.ColorReset))
+	fmt.Print("\n\n\n")
 }
 
 func main() {
@@ -51,11 +60,4 @@ func main() {
 
 	app.Run()
 
-}
-
-func Is256ColorSupported() bool {
-	if strings.Contains(os.Getenv("TERM"), "256") || strings.Contains(os.Getenv("COLORTERM"), "256") {
-		return true
-	}
-	return false
 }

@@ -3,6 +3,7 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"io/ioutil"
 	"os"
 	"sync"
@@ -103,14 +104,6 @@ func (db *Database) Reset() error {
 }
 
 /*
-List all requests
-*/
-func (db *Database) List() error {
-
-	return nil
-}
-
-/*
 Edit a request
 */
 func (r *Request) Edit() error {
@@ -120,7 +113,10 @@ func (r *Request) Edit() error {
 /*
 Delete a request
 */
-func (r *Request) Delete() error {
+func (db *Database) Delete(reqName string) error {
+	delete(db.Data, reqName)
+	db.Save()
+	db.Load()
 	return nil
 }
 
@@ -130,21 +126,33 @@ Display request
 func (db *Database) Display(requestName string) error {
 	r := db.Data[requestName]
 	fmt.Println("")
-	fmt.Printf("Name : %s \n", r.Name)
-	fmt.Printf("Method : %s \n", r.Method)
-	fmt.Printf("URL : %s \n", r.URL)
+	name := fmt.Sprintf("Name : %s", r.Name)
+	method := fmt.Sprintf("Method : %s", r.Method)
+	url := fmt.Sprintf("URL : %s", r.URL)
+
+	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
+	StringSeparatorDisplay(name)
+	StringSeparatorDisplay(method)
+	StringSeparatorDisplay(url)
 	if len(r.Params) > 0 {
-		jsonParams, _ := json.Marshal(r.Params)
-		fmt.Printf("Params : %s \n", string(jsonParams))
+		jsonParams, _ := json.MarshalIndent(r.Params, "", "    ")
+		params := fmt.Sprintf("Params :\n%s", string(jsonParams))
+		StringSeparatorDisplay(params)
 	}
 	if len(r.Payload) > 0 {
-		jsonPayload, _ := json.Marshal(r.Payload)
-		fmt.Printf("Payload : %s \n", string(jsonPayload))
+		jsonPayload, _ := json.MarshalIndent(r.Payload, "", "    ")
+		payload := fmt.Sprintf("Payload :\n%s", string(jsonPayload))
+		StringSeparatorDisplay(payload)
 	}
 	if len(r.Headers) > 0 {
-		jsonHeaders, _ := json.Marshal(r.Headers)
-		fmt.Printf("Headers : %s \n", string(jsonHeaders))
+		jsonHeaders, _ := json.MarshalIndent(r.Headers, "", "    ")
+		headers := fmt.Sprintf("Headers :\n%s", string(jsonHeaders))
+		StringSeparatorDisplay(headers)
 	}
+	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	fmt.Println("")
 	return nil
+}
+func StringSeparatorDisplay(s string) {
+	fmt.Println(string(color.ColorWhite), s, string(color.ColorReset))
 }

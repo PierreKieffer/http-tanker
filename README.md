@@ -9,8 +9,6 @@
 
 <div align="center">
 
-**http-tanker**
-
 CLI application used for API testing. 
 
 Easily create, manage and execute http requests from the terminal.

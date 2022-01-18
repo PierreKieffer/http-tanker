@@ -30,10 +30,10 @@ func (app *App) Run() {
 	for {
 		sig := <-app.SigChan
 		switch sig.Sig {
-		case "Requests":
-			go app.Requests()
 		case "Home":
 			go app.Home()
+		case "Requests":
+			go app.Requests()
 		case "Exit":
 			os.Exit(1)
 		case "Create request":
@@ -41,9 +41,17 @@ func (app *App) Run() {
 		case "Run":
 			go app.RunRequest(sig.Meta)
 		case "reqSelect":
-			go app.Request(sig.Meta)
+			switch sig.Meta {
+			case "Home":
+				go app.Home()
+			default:
+				go app.Request(sig.Meta)
+			}
+
 		case "reqCreate":
 			go app.Request(sig.Meta)
+		case "Delete":
+			go app.Delete(sig.Meta)
 
 		}
 	}
@@ -139,7 +147,7 @@ func (app *App) Request(reqName string) error {
 		{
 			Name: "request",
 			Prompt: &survey.Select{
-				Options: []string{"Home", "Run", "Details", "Edit", "Delete"},
+				Options: []string{"Home", "Run", "Edit", "Delete"},
 			},
 			Validate: survey.Required,
 		},
@@ -360,5 +368,57 @@ func (app *App) Create() error {
 
 	app.SigChan <- sig
 
+	return nil
+}
+
+/*
+Edit
+*/
+func (app *App) Edit(reqName string) error {
+	return nil
+
+}
+
+/*
+Delete
+*/
+func (app *App) Delete(reqName string) error {
+
+	var menu = []*survey.Question{
+		{
+			Name: "confirmDelete",
+			Prompt: &survey.Confirm{
+				Message: fmt.Sprintf("This will delete the request : %v. Continue ?", reqName),
+				Default: false,
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	answers := struct {
+		ConfirmDelete bool
+	}{}
+
+	err := survey.Ask(menu, &answers)
+	if err != nil {
+		fmt.Printf("ERROR : %v", err)
+		return err
+	}
+
+	switch answers.ConfirmDelete {
+	case true:
+		delete(app.Database.Data, reqName)
+		app.Database.Save()
+		app.Database.Load()
+
+		fmt.Printf("The request %v has been successfully deleted\n", reqName)
+		fmt.Println()
+	}
+
+	sig := Signal{
+		Sig: "Home",
+	}
+
+	app.SigChan <- sig
 	return nil
 }

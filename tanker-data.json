@@ -1,0 +1,38 @@
+{
+    "post-request": {
+        "headers": {
+            "k": "v"
+        },
+        "name": "post-request",
+        "params": {
+            "k": "v"
+        },
+        "payload": {},
+        "method": "POST", 
+	"url" : "http://localhost:8080/post"
+    },
+    "get-request": {
+        "method": "GET", 
+	"url" : "http://localhost:8080/get", 
+        "headers": {
+            "k": "v"
+        },
+        "name": "get-request",
+        "params": {
+            "k": "v"
+        },
+        "payload": {},
+        "method": ""
+    }, 
+    "pull-request": {
+        "headers": {
+            "k": "v"
+        },
+        "name": "pull-request",
+        "params": {
+            "k": "v"
+        },
+        "payload": {},
+        "method": ""
+    }
+}

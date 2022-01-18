@@ -10,8 +10,10 @@
 <div align="center">
 
 **http-tanker**
+
 CLI application used for API testing. 
-Create, manage and execute HTTP requests. 
+
+Easily create, manage and execute http requests from the terminal.
 
 
 <!-- <img src="./assets/htui_demo.gif" /> -->

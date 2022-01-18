@@ -111,13 +111,6 @@ func (db *Database) List() error {
 }
 
 /*
-Execute a request
-*/
-func (r *Request) Run() error {
-	return nil
-}
-
-/*
 Edit a request
 */
 func (r *Request) Edit() error {

@@ -38,14 +38,12 @@ func (app *App) Run() {
 			os.Exit(1)
 		case "Create request":
 			go app.Create()
-
-		default:
-			switch sig.Meta {
-			case "reqSelect":
-				go app.Request(sig.Sig)
-			case "reqCreate":
-				go app.Request(sig.Sig)
-			}
+		case "Run":
+			go app.RunRequest(sig.Meta)
+		case "reqSelect":
+			go app.Request(sig.Meta)
+		case "reqCreate":
+			go app.Request(sig.Meta)
 
 		}
 	}
@@ -75,6 +73,7 @@ func (app *App) Home() error {
 	err := survey.Ask(menu, &answers)
 
 	if err != nil {
+		fmt.Printf("ERROR : %v", err)
 		return err
 	}
 
@@ -121,8 +120,8 @@ func (app *App) Requests() error {
 	}
 
 	sig := Signal{
-		Meta: "reqSelect",
-		Sig:  answers.Requests,
+		Sig:  "reqSelect",
+		Meta: answers.Requests,
 	}
 
 	app.SigChan <- sig
@@ -159,7 +158,7 @@ func (app *App) Request(reqName string) error {
 	}
 
 	sig := Signal{
-		Meta: "reqAction",
+		Meta: reqName,
 		Sig:  answers.Request,
 	}
 
@@ -167,6 +166,30 @@ func (app *App) Request(reqName string) error {
 
 	return nil
 
+}
+
+/*
+RunRequest
+Execute HTTP request, display response
+*/
+func (app *App) RunRequest(reqName string) error {
+	r := app.Database.Data[reqName]
+	err := r.CallHTTP()
+	if err != nil {
+		fmt.Printf("ERROR : %v \n", err)
+		sig := Signal{
+			Meta: reqName,
+			Sig:  "reqSelect",
+		}
+		app.SigChan <- sig
+		return err
+	}
+	sig := Signal{
+		Meta: reqName,
+		Sig:  "reqSelect",
+	}
+	app.SigChan <- sig
+	return nil
 }
 
 /*
@@ -290,8 +313,8 @@ func (app *App) Create() error {
 	}
 
 	sig := Signal{
-		Meta: "reqCreate",
-		Sig:  genericAnswer.Name,
+		Sig:  "reqCreate",
+		Meta: genericAnswer.Name,
 	}
 
 	// Build Request object

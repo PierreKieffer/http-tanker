@@ -465,6 +465,8 @@ Edit
 */
 func (app *App) Edit(reqName string) error {
 
+	app.Database.Display(reqName)
+
 	req := app.Database.Data[reqName]
 	jsonReq, _ := json.MarshalIndent(req, "", "    ")
 

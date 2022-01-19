@@ -223,12 +223,13 @@ func (app *App) RunRequest(reqName string) error {
 	r := app.Database.Data[reqName]
 	resp, err := r.CallHTTP()
 	if err != nil {
-		fmt.Printf("ERROR : %v \n", err)
-		sig := Signal{
-			Meta: reqName,
-			Sig:  "reqSelect",
-		}
-		app.SigChan <- sig
+		app.ErrorHandler(err)
+		// fmt.Printf("ERROR : %v \n", err)
+		// sig := Signal{
+		// Meta: reqName,
+		// Sig:  "reqSelect",
+		// }
+		// app.SigChan <- sig
 		return err
 	}
 
@@ -618,4 +619,13 @@ func Banner() {
 	fmt.Println(string(bannerBuffer))
 	fmt.Println(string(color.ColorGrey), fmt.Sprintf("  version : %v", version), string(color.ColorReset))
 	fmt.Print("\n")
+}
+
+/*
+Error handler
+*/
+
+func (app *App) ErrorHandler(err error) {
+	fmtError := fmt.Sprintf("ERROR : %v", err.Error())
+	fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
 }

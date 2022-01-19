@@ -60,7 +60,51 @@ func (db *Database) Load() error {
 		}
 		defer jsonFile.Close()
 
-		var data = map[string]Request{}
+		var data = map[string]Request{
+			"get-template": Request{
+				Name:   "get-template",
+				Method: "GET",
+				URL:    "http://localhost:8080/get",
+				Params: map[string]interface{}{
+					"foo":   "bar",
+					"count": 42,
+				},
+				Headers: map[string]interface{}{
+					"Authorization": "secret",
+				},
+			},
+			"post-template": Request{
+				Name:   "post-template",
+				Method: "POST",
+				URL:    "http://localhost:8080/post",
+				Payload: map[string]interface{}{
+					"languages": []map[string]interface{}{
+						map[string]interface{}{
+							"name":            "Python",
+							"staticallyTyped": false,
+						},
+						map[string]interface{}{
+							"name":            "Javascript",
+							"staticallyTyped": false,
+						},
+						map[string]interface{}{
+							"name":            "Golang",
+							"staticallyTyped": true,
+						},
+						map[string]interface{}{
+							"name":            "Rust",
+							"staticallyTyped": true,
+						},
+					},
+					"foo":   "bar",
+					"count": 42,
+				},
+				Headers: map[string]interface{}{
+					"Content-Type":  "application/json",
+					"Authorization": "secret",
+				},
+			},
+		}
 		db.Data = data
 
 		db.Save()
@@ -120,7 +164,6 @@ func (db *Database) Display(requestName string) error {
 
 	r := db.Data[requestName]
 
-	fmt.Println("")
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	fmt.Println(string(color.ColorBlue), "Request details : ", string(color.ColorReset))
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))

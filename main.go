@@ -8,12 +8,7 @@ import (
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"github.com/PierreKieffer/http-tanker/pkg/core"
 	"github.com/mgutz/ansi"
-	"io/ioutil"
 	"os/user"
-)
-
-var (
-	version string = "edge"
 )
 
 func init() {
@@ -31,10 +26,6 @@ func init() {
 		}
 	}
 
-	bannerBuffer, _ := ioutil.ReadFile("assets/banner")
-	fmt.Println(string(bannerBuffer))
-	fmt.Println(string(color.ColorGrey), fmt.Sprintf("  version : %v", version), string(color.ColorReset))
-	fmt.Print("\n\n\n")
 }
 
 func main() {

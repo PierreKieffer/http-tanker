@@ -107,7 +107,7 @@ func FmtResponse(resp *http.Response, duration int64) (Response, error) {
 	} else {
 		response.JsonBody = jsonResponse
 	}
-	response.ExecutionTime = duration
+	response.ExecutionTimeMillisec = duration
 
 	return response, nil
 

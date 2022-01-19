@@ -10,6 +10,10 @@ import (
 	"os"
 )
 
+var (
+	version string = "edge"
+)
+
 type App struct {
 	SigChan  chan Signal
 	Database *core.Database
@@ -28,38 +32,51 @@ Consumes the channel, and acts accordingly
 */
 func (app *App) Run() {
 
+	Banner()
 	go app.Home()
 
 	for {
 		sig := <-app.SigChan
 		switch sig.Sig {
 		case "Home", "Back to Home Menu":
+			Banner()
 			go app.Home()
 		case "Browse requests", "Back to requests":
+			Banner()
 			go app.Requests()
 		case "Exit":
+			fmt.Print("\033[H\033[2J")
 			os.Exit(1)
 		case "Create request":
+			Banner()
 			go app.Create()
 		case "Run":
+			Banner()
 			go app.RunRequest(sig.Meta)
 		case "reqSelect":
 			switch sig.Meta {
 			case "Home", "Back to Home Menu":
+				Banner()
 				go app.Home()
 			case "Browse requests", "Back to requests":
+				Banner()
 				go app.Requests()
 			case "Exit":
+				fmt.Print("\033[H\033[2J")
 				os.Exit(1)
 			default:
+				Banner()
 				go app.Request(sig.Meta, sig.Display)
 			}
 
 		case "reqCreate":
+			Banner()
 			go app.Request(sig.Meta, sig.Display)
 		case "Edit":
+			Banner()
 			go app.Edit(sig.Meta)
 		case "Delete":
+			Banner()
 			go app.Delete(sig.Meta)
 		case "About":
 			go app.About()
@@ -237,8 +254,7 @@ func (app *App) RunRequest(reqName string) error {
 	case true:
 		var content string
 		var menu = &survey.Editor{
-			Message:       "Inspect Response",
-			FileName:      "http-tanker-edit*.json",
+			FileName:      "http-tanker-response-inspector*.json",
 			Default:       resp,
 			AppendDefault: true,
 			HideDefault:   true,
@@ -253,7 +269,7 @@ func (app *App) RunRequest(reqName string) error {
 	sig := Signal{
 		Meta:    reqName,
 		Sig:     "reqSelect",
-		Display: false,
+		Display: true,
 	}
 	app.SigChan <- sig
 	return nil
@@ -451,7 +467,7 @@ func (app *App) Edit(reqName string) error {
 	content := ""
 
 	var menu = &survey.Editor{
-		Message:       "Edit : ",
+		// Message:       "Edit : ",
 		FileName:      "http-tanker-edit*.json",
 		Default:       string(jsonReq),
 		AppendDefault: true,
@@ -519,8 +535,29 @@ func (app *App) Delete(reqName string) error {
 		fmt.Println("")
 	}
 
+	menu = []*survey.Question{
+		{
+			Name: "back",
+			Prompt: &survey.Select{
+				// showingHelp: false,
+				Options: []string{"Back to Home Menu", "Back to requests", "Exit"},
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	back := struct {
+		Back string
+	}{}
+
+	err = survey.Ask(menu, &back)
+	if err != nil {
+		fmt.Printf("ERROR : %v", err)
+		return err
+	}
+
 	sig := Signal{
-		Sig: "Home",
+		Sig: back.Back,
 	}
 
 	app.SigChan <- sig
@@ -532,9 +569,31 @@ About
 */
 func (app *App) About() error {
 
+	Banner()
 	aboutBuffer, _ := ioutil.ReadFile("assets/about")
 	fmt.Println(string(aboutBuffer))
 	fmt.Println("")
+
+	var menu = []*survey.Question{
+		{
+			Name: "home",
+			Prompt: &survey.Select{
+				// showingHelp: false,
+				Options: []string{"Back to Home Menu"},
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	answers := struct {
+		Home string
+	}{}
+
+	err := survey.Ask(menu, &answers)
+	if err != nil {
+		fmt.Printf("ERROR : %v", err)
+		return err
+	}
 
 	sig := Signal{
 		Sig: "Home",
@@ -542,4 +601,15 @@ func (app *App) About() error {
 
 	app.SigChan <- sig
 	return nil
+}
+
+/*
+Banner
+*/
+func Banner() {
+	fmt.Print("\033[H\033[2J")
+	bannerBuffer, _ := ioutil.ReadFile("assets/banner")
+	fmt.Println(string(bannerBuffer))
+	fmt.Println(string(color.ColorGrey), fmt.Sprintf("  version : %v", version), string(color.ColorReset))
+	fmt.Print("\n")
 }

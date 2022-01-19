@@ -7,4 +7,4 @@ if [ -z "$VERSION" ]; then
 
 fi
 
-go build -ldflags "-X main.version=$VERSION" -o tanker
+go build -ldflags "-X github.com/PierreKieffer/http-tanker/pkg/cli.version=$VERSION" -o tanker

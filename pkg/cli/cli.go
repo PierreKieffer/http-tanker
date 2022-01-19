@@ -256,6 +256,10 @@ func (app *App) RunRequest(reqName string) error {
 
 	switch answers.InspectResponse {
 	case true:
+		/*
+		   Inspect Response
+		   Open response in editor to inspect
+		*/
 		var content string
 		var menu = &survey.Editor{
 			FileName:      "http-tanker-response-inspector*.json",
@@ -277,15 +281,6 @@ func (app *App) RunRequest(reqName string) error {
 	}
 	app.SigChan <- sig
 	return nil
-}
-
-/*
-Inspect Response
-Open response in editor to inspect
-*/
-func (app *App) Inspect() error {
-	return nil
-
 }
 
 /*

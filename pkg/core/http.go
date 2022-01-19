@@ -7,6 +7,7 @@ import (
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"io/ioutil"
 	"net/http"
+	"time"
 )
 
 func (r *Request) CallHTTP() error {
@@ -43,23 +44,26 @@ func (r *Request) CallHTTP() error {
 
 	}
 
+	start := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
+	duration := time.Since(start)
 
-	RespDisplay(resp)
+	RespDisplay(resp, duration.Milliseconds())
 
 	return nil
 }
 
-func RespDisplay(resp *http.Response) error {
+func RespDisplay(resp *http.Response, duration int64) error {
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	fmt.Println(string(color.ColorBlue), "Response details : ", string(color.ColorReset))
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	status := fmt.Sprintf("Status : %v", resp.Status)
 	statusCode := fmt.Sprintf("Status code : %v", resp.StatusCode)
 	proto := fmt.Sprintf("Protocol : %v", resp.Proto)
+	execTime := fmt.Sprintf("Execution time : %v ms", duration)
 	StringSeparatorDisplay(status)
 	StringSeparatorDisplay(statusCode)
 	StringSeparatorDisplay(proto)
@@ -73,6 +77,7 @@ func RespDisplay(resp *http.Response) error {
 		body := fmt.Sprintf("Body : %v", string(bodyBytes))
 		StringSeparatorDisplay(body)
 	}
+	StringSeparatorDisplay(execTime)
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	fmt.Println("")
 

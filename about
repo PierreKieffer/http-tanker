@@ -1,0 +1,10 @@
+  _   _   _            _             _
+ | |_| |_| |_ _ __ ___| |_ __ _ _ _ | |_____ _ _
+ | ' \  _|  _| '_ \___|  _/ _` | ' \| / / -_) '_|
+ |_||_\__|\__| .__/    \__\__,_|_||_|_\_\___|_|
+             |_|
+
+
+http-tanker is a CLI application used for API testing. 
+
+Easily create, manage and execute http requests from the terminal.

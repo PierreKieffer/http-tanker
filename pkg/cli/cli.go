@@ -32,9 +32,9 @@ func (app *App) Run() {
 	for {
 		sig := <-app.SigChan
 		switch sig.Sig {
-		case "Home":
+		case "Home", "Back to Home Menu":
 			go app.Home()
-		case "Browse requests":
+		case "Browse requests", "Back to requests":
 			go app.Requests()
 		case "Exit":
 			os.Exit(1)
@@ -44,8 +44,12 @@ func (app *App) Run() {
 			go app.RunRequest(sig.Meta)
 		case "reqSelect":
 			switch sig.Meta {
-			case "Home":
+			case "Home", "Back to Home Menu":
 				go app.Home()
+			case "Browse requests", "Back to requests":
+				go app.Requests()
+			case "Exit":
+				os.Exit(1)
 			default:
 				go app.Request(sig.Meta, sig.Display)
 			}
@@ -56,6 +60,8 @@ func (app *App) Run() {
 			go app.Edit(sig.Meta)
 		case "Delete":
 			go app.Delete(sig.Meta)
+		case "About":
+			go app.About()
 
 		}
 	}
@@ -109,7 +115,7 @@ Display all available requests previously created by the user
 */
 func (app *App) Requests() error {
 
-	var reqList = []string{"Home"}
+	var reqList = []string{"Back to Home Menu"}
 	for r, _ := range app.Database.Data {
 		reqList = append(reqList, r)
 	}
@@ -156,7 +162,7 @@ func (app *App) Request(reqName string, display bool) error {
 		{
 			Name: "request",
 			Prompt: &survey.Select{
-				Options: []string{"Home", "Run", "Edit", "Delete"},
+				Options: []string{"Run", "Edit", "Delete", "Back to requests", "Exit"},
 			},
 			Validate: survey.Required,
 		},
@@ -462,6 +468,20 @@ func (app *App) Delete(reqName string) error {
 		fmt.Println(string(color.ColorGreen), message, string(color.ColorReset))
 		fmt.Println("")
 	}
+
+	sig := Signal{
+		Sig: "Home",
+	}
+
+	app.SigChan <- sig
+	return nil
+}
+
+/*
+About
+*/
+func (app *App) About() error {
+	fmt.Println("ABOUT")
 
 	sig := Signal{
 		Sig: "Home",

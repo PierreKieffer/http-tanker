@@ -47,6 +47,6 @@ tanker
 
 
 ## License
-BSD
+BSD 2-Clause License
 
 

@@ -26,7 +26,7 @@ type Database struct {
 }
 
 /*
-Init post-office local database
+Init local database
 */
 func (db *Database) InitDB() error {
 
@@ -47,7 +47,7 @@ func (db *Database) InitDB() error {
 }
 
 /*
-Save local database file
+Load local database file
 */
 func (db *Database) Load() error {
 
@@ -100,13 +100,6 @@ Reset local database file
 func (db *Database) Reset() error {
 	db.Data = map[string]Request{}
 	db.Save()
-	return nil
-}
-
-/*
-Edit a request
-*/
-func (r *Request) Edit() error {
 	return nil
 }
 

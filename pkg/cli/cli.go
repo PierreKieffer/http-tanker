@@ -1,17 +1,21 @@
 package cli
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"github.com/PierreKieffer/http-tanker/pkg/core"
-	"io/ioutil"
 	"os"
+	"reflect"
 )
 
 var (
 	version string = "edge"
+
+	//go:embed assets/*
+	assets embed.FS
 )
 
 type App struct {
@@ -337,7 +341,7 @@ func (app *App) Create() error {
 			{
 				Name: "params",
 				Prompt: &survey.Input{
-					Message: fmt.Sprintf("%s \n", `Params (Enter the parameters in the format {"key": "value"}, default = {}) : `),
+					Message: fmt.Sprintf("%s \n", `Params (Enter the string parameters in the format {"key": "value"}, default = {}) : `),
 					Default: "{}",
 				},
 				Validate: func(val interface{}) error {
@@ -345,6 +349,11 @@ func (app *App) Create() error {
 					err := json.Unmarshal([]byte(val.(string)), &jsonData)
 					if err != nil {
 						return fmt.Errorf("Wrong input format")
+					}
+					for k, v := range jsonData {
+						if reflect.TypeOf(v).String() != "string" {
+							return fmt.Errorf("Wront value type for param %v : %v. Type must be a string", k, reflect.TypeOf(v).String())
+						}
 					}
 					return nil
 				},
@@ -570,7 +579,7 @@ About
 func (app *App) About() error {
 
 	Banner()
-	aboutBuffer, _ := ioutil.ReadFile("assets/about")
+	aboutBuffer, _ := assets.ReadFile("assets/about")
 	fmt.Println(string(aboutBuffer))
 	fmt.Println("")
 
@@ -608,7 +617,7 @@ Banner
 */
 func Banner() {
 	fmt.Print("\033[H\033[2J")
-	bannerBuffer, _ := ioutil.ReadFile("assets/banner")
+	bannerBuffer, _ := assets.ReadFile("assets/banner")
 	fmt.Println(string(bannerBuffer))
 	fmt.Println(string(color.ColorGrey), fmt.Sprintf("  version : %v", version), string(color.ColorReset))
 	fmt.Print("\n")

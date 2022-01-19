@@ -67,7 +67,7 @@ func (db *Database) Load() error {
 				URL:    "http://localhost:8080/get",
 				Params: map[string]interface{}{
 					"foo":   "bar",
-					"count": 42,
+					"count": "42",
 				},
 				Headers: map[string]interface{}{
 					"Authorization": "secret",

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/AlecAivazis/survey/v2"
+	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"github.com/PierreKieffer/http-tanker/pkg/core"
 	"os"
 )
@@ -33,7 +34,7 @@ func (app *App) Run() {
 		switch sig.Sig {
 		case "Home":
 			go app.Home()
-		case "Requests":
+		case "Browse requests":
 			go app.Requests()
 		case "Exit":
 			os.Exit(1)
@@ -51,6 +52,8 @@ func (app *App) Run() {
 
 		case "reqCreate":
 			go app.Request(sig.Meta, sig.Display)
+		case "Edit":
+			go app.Edit(sig.Meta)
 		case "Delete":
 			go app.Delete(sig.Meta)
 
@@ -64,12 +67,16 @@ Display Home menu options
 */
 func (app *App) Home() error {
 
+	home := ` -------------
+   | Home Menu |
+   -------------
+	`
 	var menu = []*survey.Question{
 		{
 			Name: "home",
 			Prompt: &survey.Select{
-				Message: fmt.Sprintf("---- Home Menu ----"),
-				Options: []string{"Requests", "Create request", "Exit"},
+				Message: home,
+				Options: []string{"Browse requests", "Create request", "About", "Exit"},
 			},
 			Validate: survey.Required,
 		},
@@ -381,6 +388,42 @@ func (app *App) Create() error {
 Edit
 */
 func (app *App) Edit(reqName string) error {
+
+	req := app.Database.Data[reqName]
+	jsonReq, _ := json.MarshalIndent(req, "", "    ")
+
+	content := ""
+
+	var menu = &survey.Editor{
+		Message:       "Edit : ",
+		FileName:      "http-tanker-edit*.json",
+		Default:       string(jsonReq),
+		AppendDefault: true,
+		HideDefault:   true,
+	}
+
+	err := survey.AskOne(menu, &content)
+	if err != nil {
+		return err
+	}
+	var updateReq core.Request
+	json.Unmarshal([]byte(content), &updateReq)
+
+	app.Database.Data[updateReq.Name] = updateReq
+	app.Database.Save()
+	app.Database.Load()
+
+	sig := Signal{
+		Sig:     "reqCreate",
+		Meta:    updateReq.Name,
+		Display: true,
+	}
+
+	message := fmt.Sprintf("The request %v has been edited successfully", reqName)
+	fmt.Println("")
+	fmt.Println(string(color.ColorGreen), message, string(color.ColorReset))
+	app.SigChan <- sig
+
 	return nil
 
 }
@@ -414,7 +457,9 @@ func (app *App) Delete(reqName string) error {
 	switch answers.ConfirmDelete {
 	case true:
 		app.Database.Delete(reqName)
-		fmt.Printf("The request %v has been successfully deleted\n", reqName)
+		message := fmt.Sprintf("The request %v was successfully deleted", reqName)
+		fmt.Println("")
+		fmt.Println(string(color.ColorGreen), message, string(color.ColorReset))
 		fmt.Println("")
 	}
 

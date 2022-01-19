@@ -13,8 +13,8 @@ type Request struct {
 	Name    string                 `json:"name"`
 	Method  string                 `json:"method"`
 	URL     string                 `json:"url"`
-	Params  map[string]interface{} `json:"params"`
-	Payload map[string]interface{} `json:"payload"`
+	Params  map[string]interface{} `json:"params,omitempty"`
+	Payload map[string]interface{} `json:"payload,omitempty"`
 	Headers map[string]interface{} `json:"headers"`
 }
 
@@ -124,15 +124,17 @@ func (db *Database) Delete(reqName string) error {
 Display request
 */
 func (db *Database) Display(requestName string) error {
+
 	r := db.Data[requestName]
+
 	fmt.Println("")
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	fmt.Println(string(color.ColorBlue), "Request details : ", string(color.ColorReset))
+	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
+
 	name := fmt.Sprintf("Name : %s", r.Name)
 	method := fmt.Sprintf("Method : %s", r.Method)
 	url := fmt.Sprintf("URL : %s", r.URL)
-
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	StringSeparatorDisplay(name)
 	StringSeparatorDisplay(method)
 	StringSeparatorDisplay(url)
@@ -153,6 +155,7 @@ func (db *Database) Display(requestName string) error {
 	}
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	fmt.Println("")
+
 	return nil
 }
 func StringSeparatorDisplay(s string) {

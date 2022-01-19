@@ -51,8 +51,6 @@ func (app *App) Run() {
 
 		case "reqCreate":
 			go app.Request(sig.Meta, sig.Display)
-		case "Edit":
-			go app.Edit(sig.Meta)
 		case "Delete":
 			go app.Delete(sig.Meta)
 
@@ -382,26 +380,7 @@ func (app *App) Create() error {
 /*
 Edit
 */
-func SuggestData(reqName string) []string {
-
-	return []string{reqName}
-}
 func (app *App) Edit(reqName string) error {
-	var menu = &survey.Editor{
-		Message:  "Edit : ",
-		FileName: "/Users/pierre/http-tanker/http-tanker-data.json",
-	}
-
-	genericAnswer := struct {
-		Edit string
-	}{}
-
-	err := survey.AskOne(menu, &genericAnswer)
-
-	if err != nil {
-		return err
-	}
-	fmt.Println(genericAnswer.Edit)
 	return nil
 
 }

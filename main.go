@@ -31,7 +31,7 @@ func init() {
 		}
 	}
 
-	bannerBuffer, _ := ioutil.ReadFile("banner.txt")
+	bannerBuffer, _ := ioutil.ReadFile("assets/banner")
 	fmt.Println(string(bannerBuffer))
 	fmt.Println(string(color.ColorGrey), fmt.Sprintf("  version : %v", version), string(color.ColorReset))
 	fmt.Print("\n\n\n")

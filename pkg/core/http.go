@@ -10,11 +10,21 @@ import (
 	"time"
 )
 
-func (r *Request) CallHTTP() error {
+type Response struct {
+	Status                string                 `json:"status,omitempty"`
+	StatusCode            int                    `json:"statusCode,omitempty"`
+	Proto                 string                 `json:"proto,omitempty"`
+	Headers               http.Header            `json:"headers,omitempty"`
+	JsonBody              map[string]interface{} `json:"jsonBody,omitempty"`
+	Body                  string                 `json:"body,omitempty"`
+	ExecutionTimeMillisec int64                  `json:"executionTimeMillisec,omitempty"`
+}
+
+func (r *Request) CallHTTP() (string, error) {
 	client := &http.Client{}
 	req, err := http.NewRequest(r.Method, r.URL, nil)
 	if err != nil {
-		return err
+		return "", err
 	}
 
 	switch r.Method {
@@ -32,7 +42,7 @@ func (r *Request) CallHTTP() error {
 		jsonPayload, _ := json.Marshal(r.Payload)
 		req, err = http.NewRequest(r.Method, r.URL, bytes.NewBuffer(jsonPayload))
 		if err != nil {
-			return err
+			return "", err
 		}
 
 	}
@@ -47,16 +57,18 @@ func (r *Request) CallHTTP() error {
 	start := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
-		return err
+		return "", err
 	}
 	duration := time.Since(start)
 
-	RespDisplay(resp, duration.Milliseconds())
+	fmtResponse, _ := FmtResponse(resp, duration.Milliseconds())
+	fmtStringResponse, _ := json.MarshalIndent(fmtResponse, "", "    ")
 
-	return nil
+	return string(fmtStringResponse), nil
 }
 
-func RespDisplay(resp *http.Response, duration int64) error {
+func FmtResponse(resp *http.Response, duration int64) (Response, error) {
+
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	fmt.Println(string(color.ColorBlue), "Response details : ", string(color.ColorReset))
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
@@ -81,5 +93,22 @@ func RespDisplay(resp *http.Response, duration int64) error {
 	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
 	fmt.Println("")
 
-	return nil
+	var response = Response{
+		Status:     resp.Status,
+		StatusCode: resp.StatusCode,
+		Proto:      resp.Proto,
+		Headers:    resp.Header,
+	}
+
+	var jsonResponse map[string]interface{}
+	err = json.Unmarshal(bodyBytes, &jsonResponse)
+	if err != nil {
+		response.Body = string(bodyBytes)
+	} else {
+		response.JsonBody = jsonResponse
+	}
+	response.ExecutionTime = duration
+
+	return response, nil
+
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"github.com/PierreKieffer/http-tanker/pkg/core"
+	"io/ioutil"
 	"os"
 )
 
@@ -199,7 +200,7 @@ Execute HTTP request, display response
 */
 func (app *App) RunRequest(reqName string) error {
 	r := app.Database.Data[reqName]
-	err := r.CallHTTP()
+	resp, err := r.CallHTTP()
 	if err != nil {
 		fmt.Printf("ERROR : %v \n", err)
 		sig := Signal{
@@ -209,6 +210,46 @@ func (app *App) RunRequest(reqName string) error {
 		app.SigChan <- sig
 		return err
 	}
+
+	// Ask if user wants to inspect response
+	var menu = []*survey.Question{
+		{
+			Name: "inspectResponse",
+			Prompt: &survey.Confirm{
+				Message: "Inspect response in editor ?",
+				Default: false,
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	answers := struct {
+		InspectResponse bool
+	}{}
+
+	err = survey.Ask(menu, &answers)
+	if err != nil {
+		fmt.Printf("ERROR : %v", err)
+		return err
+	}
+
+	switch answers.InspectResponse {
+	case true:
+		var content string
+		var menu = &survey.Editor{
+			Message:       "Inspect Response",
+			FileName:      "http-tanker-edit*.json",
+			Default:       resp,
+			AppendDefault: true,
+			HideDefault:   true,
+		}
+
+		err := survey.AskOne(menu, &content)
+		if err != nil {
+			return err
+		}
+	}
+
 	sig := Signal{
 		Meta:    reqName,
 		Sig:     "reqSelect",
@@ -216,6 +257,15 @@ func (app *App) RunRequest(reqName string) error {
 	}
 	app.SigChan <- sig
 	return nil
+}
+
+/*
+Inspect Response
+Open response in editor to inspect
+*/
+func (app *App) Inspect() error {
+	return nil
+
 }
 
 /*
@@ -481,7 +531,10 @@ func (app *App) Delete(reqName string) error {
 About
 */
 func (app *App) About() error {
-	fmt.Println("ABOUT")
+
+	aboutBuffer, _ := ioutil.ReadFile("assets/about")
+	fmt.Println(string(aboutBuffer))
+	fmt.Println("")
 
 	sig := Signal{
 		Sig: "Home",

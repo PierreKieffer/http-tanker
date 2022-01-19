@@ -13,27 +13,21 @@ CLI application used for API testing.
 
 Easily create, manage and execute http requests from the terminal.
 
-
 <!-- <img src="./assets/htui_demo.gif" /> -->
-
 
 </div>
 
 ---
 
-http-tanker is a cli application used for API testing.
-It allows you to create, manage and execute HTTP requests. 
+http-tanker embeds an API client to explore, test and debugs your APIs. 
+Through http-tanker you can easily create, manage and execute http requests from the terminal.
 
-Features :
-- Créer une requête
-	- Type (GET, POST, DELETE, PUT)
-	- String query / payload
-	- Headers
+## Built With
 
-- Lister mes requêtes
-	- EDIT Modifier une requête
-	- DELETE Supprimer une requête
-	- RUN Exécuter une requête
+- [AlecAivazis/survey](https://github.com/AlecAivazis/survey)
 
+
+## License
+BSD
 
 

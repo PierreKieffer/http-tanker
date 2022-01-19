@@ -13,7 +13,7 @@ CLI application used for API testing.
 
 Easily create, manage and execute http requests from the terminal.
 
-<!-- <img src="./assets/htui_demo.gif" /> -->
+<!-- <img src="./assets/tanker_demo.gif" /> -->
 
 </div>
 
@@ -21,6 +21,25 @@ Easily create, manage and execute http requests from the terminal.
 
 http-tanker embeds an API client to explore, test and debugs your APIs. 
 Through http-tanker you can easily create, manage and execute http requests from the terminal.
+
+## Install 
+
+**Note**: Prebuilt binaries for 64-bit operating systems, doesn't require Go.
+
+### 64-bit
+#### Linux 
+```bash 
+curl -sSL https://raw.githubusercontent.com/PierreKieffer/http-tanker/master/install/install_tanker64_linux.sh | bash
+```
+#### Mac OS 
+```bash 
+curl -sSL https://raw.githubusercontent.com/PierreKieffer/http-tanker/master/install/install_tanker64_osx.sh | bash
+```
+
+## Run 
+```bash
+tanker
+```
 
 ## Built With
 

@@ -366,7 +366,7 @@ func (app *App) Create() error {
 			{
 				Name: "params",
 				Prompt: &survey.Input{
-					Message: fmt.Sprintf("%s \n", `Params (Enter the string parameters in the format {"key": "value"}, default = {}) : `),
+					Message: fmt.Sprintf("%s \n", `Params (Enter the string parameters in {"key": "value"} format , default = {}) : `),
 					Default: "{}",
 				},
 				Validate: func(val interface{}) error {
@@ -386,12 +386,17 @@ func (app *App) Create() error {
 		}
 
 	case "POST":
+		dfltPayload := map[string]interface{}{"foo": "bar"}
+		jsonDfltPayload, _ := json.MarshalIndent(dfltPayload, "", "    ")
 		body = []*survey.Question{
 			{
 				Name: "payload",
-				Prompt: &survey.Input{
-					Message: fmt.Sprintf("%s \n", `Payload (Enter the payload in the format {"key": "value"}, default = {}) : `),
-					Default: "{}",
+				Prompt: &survey.Editor{
+					Message:       fmt.Sprintf("%s \n", `Payload (Enter the payload in json format {"key": "value"}) : `),
+					FileName:      "http-tanker-post-payload*.json",
+					Default:       string(jsonDfltPayload),
+					HideDefault:   true,
+					AppendDefault: true,
 				},
 				Validate: func(val interface{}) error {
 					var jsonData map[string]interface{}
@@ -441,7 +446,7 @@ func (app *App) Create() error {
 		{
 			Name: "headers",
 			Prompt: &survey.Input{
-				Message: fmt.Sprintf("%s \n", `Headers (Enter the headers in the format {"key": "value"}, default = {}) : `),
+				Message: fmt.Sprintf("%s \n", `Headers (Enter the headers in json format {"key": "value"}, default = {}) : `),
 				Default: "{}",
 			},
 			Validate: func(val interface{}) error {

@@ -27,6 +27,7 @@ type Signal struct {
 	Meta    string
 	Sig     string
 	Display bool
+	Err     error
 }
 
 /*
@@ -117,7 +118,7 @@ func (app *App) Home() error {
 	err := survey.Ask(menu, &answers)
 
 	if err != nil {
-		fmt.Printf("ERROR : %v", err)
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -160,6 +161,7 @@ func (app *App) Requests() error {
 	err := survey.Ask(menu, &answers)
 
 	if err != nil {
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -201,6 +203,7 @@ func (app *App) Request(reqName string, display bool) error {
 	err := survey.Ask(menu, &answers)
 
 	if err != nil {
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -223,13 +226,37 @@ func (app *App) RunRequest(reqName string) error {
 	r := app.Database.Data[reqName]
 	resp, err := r.CallHTTP()
 	if err != nil {
-		app.ErrorHandler(err)
-		// fmt.Printf("ERROR : %v \n", err)
-		// sig := Signal{
-		// Meta: reqName,
-		// Sig:  "reqSelect",
-		// }
-		// app.SigChan <- sig
+		fmtError := fmt.Sprintf("ERROR : %v", err.Error())
+		fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
+
+		var menu = []*survey.Question{
+			{
+				Name: "back",
+				Prompt: &survey.Select{
+					// showingHelp: false,
+					Options: []string{fmt.Sprintf("Back to %v request", reqName)},
+				},
+				Validate: survey.Required,
+			},
+		}
+
+		answers := struct {
+			Back string
+		}{}
+
+		err := survey.Ask(menu, &answers)
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
+
+		sig := Signal{
+			Meta:    reqName,
+			Sig:     "reqSelect",
+			Display: true,
+		}
+
+		app.SigChan <- sig
 		return err
 	}
 
@@ -251,7 +278,7 @@ func (app *App) RunRequest(reqName string) error {
 
 	err = survey.Ask(menu, &answers)
 	if err != nil {
-		fmt.Printf("ERROR : %v", err)
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -271,6 +298,7 @@ func (app *App) RunRequest(reqName string) error {
 
 		err := survey.AskOne(menu, &content)
 		if err != nil {
+			app.ErrorHandler(err)
 			return err
 		}
 	}
@@ -325,6 +353,7 @@ func (app *App) Create() error {
 	err := survey.Ask(menu, &genericAnswer)
 
 	if err != nil {
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -406,6 +435,7 @@ func (app *App) Create() error {
 	err = survey.Ask(body, &bodyAnswers)
 
 	if err != nil {
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -483,6 +513,7 @@ func (app *App) Edit(reqName string) error {
 
 	err := survey.AskOne(menu, &content)
 	if err != nil {
+		app.ErrorHandler(err)
 		return err
 	}
 	var updateReq core.Request
@@ -529,7 +560,7 @@ func (app *App) Delete(reqName string) error {
 
 	err := survey.Ask(menu, &answers)
 	if err != nil {
-		fmt.Printf("ERROR : %v", err)
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -546,7 +577,6 @@ func (app *App) Delete(reqName string) error {
 		{
 			Name: "back",
 			Prompt: &survey.Select{
-				// showingHelp: false,
 				Options: []string{"Back to Home Menu", "Back to requests", "Exit"},
 			},
 			Validate: survey.Required,
@@ -559,7 +589,7 @@ func (app *App) Delete(reqName string) error {
 
 	err = survey.Ask(menu, &back)
 	if err != nil {
-		fmt.Printf("ERROR : %v", err)
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -598,7 +628,7 @@ func (app *App) About() error {
 
 	err := survey.Ask(menu, &answers)
 	if err != nil {
-		fmt.Printf("ERROR : %v", err)
+		app.ErrorHandler(err)
 		return err
 	}
 
@@ -628,4 +658,27 @@ Error handler
 func (app *App) ErrorHandler(err error) {
 	fmtError := fmt.Sprintf("ERROR : %v", err.Error())
 	fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
+
+	menu := []*survey.Question{
+		{
+			Name: "back",
+			Prompt: &survey.Select{
+				Options: []string{"Back to Home Menu", "Back to requests", "Exit"},
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	back := struct {
+		Back string
+	}{}
+
+	survey.Ask(menu, &back)
+
+	sig := Signal{
+		Sig: back.Back,
+		Err: err,
+	}
+
+	app.SigChan <- sig
 }

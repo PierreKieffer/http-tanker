@@ -1,5 +1,5 @@
 #!/bin/bash
-VERSION=$1
+VERSION=v0.0.1.beta
 
 if [ -z "$VERSION" ]; then
         echo "You have to pass build version as arg"

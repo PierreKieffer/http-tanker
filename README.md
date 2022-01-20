@@ -13,7 +13,7 @@ CLI application used for API testing.
 
 Easily create, manage and execute http requests from the terminal.
 
-<img src="./assets/tanker_demo.gif" width="200" />
+<img src="./assets/tanker_demo.gif" width="600" />
 
 </div>
 

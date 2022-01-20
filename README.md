@@ -23,6 +23,8 @@ http-tanker embeds an API client to explore, test and debugs your APIs.
 
 Through http-tanker you can easily create, manage and execute http requests from the terminal.
 
+http-tanker is like a tiny Postman that lives in your terminal. 
+
 ## Install 
 
 **Note**: Prebuilt binaries for 64-bit operating systems, doesn't require Go.

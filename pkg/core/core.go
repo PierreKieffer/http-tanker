@@ -61,8 +61,8 @@ func (db *Database) Load() error {
 		defer jsonFile.Close()
 
 		var data = map[string]Request{
-			"get-template": Request{
-				Name:   "get-template",
+			"get-example": Request{
+				Name:   "get-example",
 				Method: "GET",
 				URL:    "http://localhost:8080/get",
 				Params: map[string]interface{}{
@@ -73,8 +73,8 @@ func (db *Database) Load() error {
 					"Authorization": "secret",
 				},
 			},
-			"post-template": Request{
-				Name:   "post-template",
+			"post-example": Request{
+				Name:   "post-example",
 				Method: "POST",
 				URL:    "http://localhost:8080/post",
 				Payload: map[string]interface{}{

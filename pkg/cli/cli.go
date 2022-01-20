@@ -331,7 +331,7 @@ func (app *App) Create() error {
 			Name: "method",
 			Prompt: &survey.Select{
 				Message: "Method : ",
-				Options: []string{"GET", "POST"},
+				Options: []string{"GET", "POST", "DELETE", "PUT"},
 			},
 			Validate: survey.Required,
 		},
@@ -403,7 +403,38 @@ func (app *App) Create() error {
 				},
 			},
 		}
+	default:
+		fmtError := fmt.Sprintf("Sorry, %v method is not yet implemented. Available methods: GET, POST.", genericAnswer.Method)
+		fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
 
+		var menu = []*survey.Question{
+			{
+				Name: "back",
+				Prompt: &survey.Select{
+					// showingHelp: false,
+					Options: []string{"Back to home"},
+				},
+				Validate: survey.Required,
+			},
+		}
+
+		answers := struct {
+			Back string
+		}{}
+
+		err := survey.Ask(menu, &answers)
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
+
+		sig := Signal{
+			Sig:     "Home",
+			Display: true,
+		}
+
+		app.SigChan <- sig
+		return nil
 	}
 
 	var headers = []*survey.Question{

@@ -9,7 +9,7 @@
 
 <div align="center">
 
-CLI application used for API testing. 
+Terminal application used for API testing. 
 
 Easily create, manage and execute http requests from the terminal.
 

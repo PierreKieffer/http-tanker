@@ -8,6 +8,7 @@ import (
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"github.com/PierreKieffer/http-tanker/pkg/core"
 	"github.com/mgutz/ansi"
+	"os"
 	"os/user"
 )
 
@@ -31,8 +32,13 @@ func init() {
 func main() {
 
 	localUser, err := user.Current()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to get current user: %v\n", err)
+		os.Exit(1)
+	}
 
 	databaseDir := flag.String("db", fmt.Sprintf("%v/http-tanker", localUser.HomeDir), "tanker database directory")
+	flag.Parse()
 
 	database := &core.Database{
 		DatabaseDir:  *databaseDir,
@@ -41,7 +47,8 @@ func main() {
 
 	err = database.InitDB()
 	if err != nil {
-		fmt.Println(err)
+		fmt.Fprintf(os.Stderr, "Failed to initialize database: %v\n", err)
+		os.Exit(1)
 	}
 
 	app := &cli.App{

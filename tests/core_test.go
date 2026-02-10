@@ -90,7 +90,10 @@ func TestDeleteRequest(t *testing.T) {
 		t.Errorf("TestDeleteRequest failed")
 	}
 
-	database.Delete("foobar")
+	err = database.Delete("foobar")
+	if err != nil {
+		t.Errorf("TestDeleteRequest Delete failed: %v", err)
+	}
 
 	jsonData, _ := json.Marshal(database.Data)
 

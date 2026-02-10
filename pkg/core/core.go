@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/PierreKieffer/http-tanker/pkg/color"
-	"io/ioutil"
+	"io"
 	"os"
 	"sync"
 )
@@ -32,7 +32,7 @@ func (db *Database) InitDB() error {
 
 	// Check database directory
 	if _, err := os.Stat(db.DatabaseDir); os.IsNotExist(err) {
-		err := os.Mkdir(db.DatabaseDir, 0755)
+		err := os.Mkdir(db.DatabaseDir, 0750)
 		if err != nil {
 			return err
 		}
@@ -50,18 +50,18 @@ func (db *Database) InitDB() error {
 Load local database file
 */
 func (db *Database) Load() error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	return db.loadLocked()
+}
+
+func (db *Database) loadLocked() error {
 
 	// Check if database file exists
 	if _, err := os.Stat(db.DatabaseFile); os.IsNotExist(err) {
-		// Initialize json database file
-		jsonFile, err := os.OpenFile(db.DatabaseFile, os.O_CREATE, 0755)
-		if err != nil {
-			return err
-		}
-		defer jsonFile.Close()
-
+		// Initialize json database with example data
 		var data = map[string]Request{
-			"get-example": Request{
+			"get-example": {
 				Name:   "get-example",
 				Method: "GET",
 				URL:    "http://localhost:8080/get",
@@ -73,25 +73,25 @@ func (db *Database) Load() error {
 					"Authorization": "secret",
 				},
 			},
-			"post-example": Request{
+			"post-example": {
 				Name:   "post-example",
 				Method: "POST",
 				URL:    "http://localhost:8080/post",
 				Payload: map[string]interface{}{
 					"languages": []map[string]interface{}{
-						map[string]interface{}{
+						{
 							"name":            "Python",
 							"staticallyTyped": false,
 						},
-						map[string]interface{}{
+						{
 							"name":            "Javascript",
 							"staticallyTyped": false,
 						},
-						map[string]interface{}{
+						{
 							"name":            "Golang",
 							"staticallyTyped": true,
 						},
-						map[string]interface{}{
+						{
 							"name":            "Rust",
 							"staticallyTyped": true,
 						},
@@ -107,18 +107,22 @@ func (db *Database) Load() error {
 		}
 		db.Data = data
 
-		db.Save()
-
-		return nil
+		return db.saveLocked()
 	}
 
 	// Get data
 	var data map[string]Request
 
 	jsonFile, err := os.Open(db.DatabaseFile)
+	if err != nil {
+		return err
+	}
 	defer jsonFile.Close()
 
-	byteValue, _ := ioutil.ReadAll(jsonFile)
+	byteValue, err := io.ReadAll(jsonFile)
+	if err != nil {
+		return err
+	}
 	err = json.Unmarshal(byteValue, &data)
 	if err != nil {
 		return err
@@ -133,28 +137,40 @@ func (db *Database) Load() error {
 Save local database file
 */
 func (db *Database) Save() error {
-	buffer, _ := json.Marshal(db.Data)
-	ioutil.WriteFile(db.DatabaseFile, buffer, 0755)
-	return nil
+	db.mu.Lock()
+	defer db.mu.Unlock()
+	return db.saveLocked()
+}
+
+func (db *Database) saveLocked() error {
+	buffer, err := json.Marshal(db.Data)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(db.DatabaseFile, buffer, 0600)
 }
 
 /*
 Reset local database file
 */
 func (db *Database) Reset() error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	db.Data = map[string]Request{}
-	db.Save()
-	return nil
+	return db.saveLocked()
 }
 
 /*
 Delete a request
 */
 func (db *Database) Delete(reqName string) error {
+	db.mu.Lock()
+	defer db.mu.Unlock()
 	delete(db.Data, reqName)
-	db.Save()
-	db.Load()
-	return nil
+	if err := db.saveLocked(); err != nil {
+		return err
+	}
+	return db.loadLocked()
 }
 
 /*

@@ -11,6 +11,22 @@ import (
 	"reflect"
 )
 
+const (
+	SigHome        = "Home"
+	SigBackHome    = "Back to Home Menu"
+	SigBrowse      = "Browse requests"
+	SigBackRequests = "Back to requests"
+	SigExit        = "Exit"
+	SigCreate      = "Create request"
+	SigRun         = "Run"
+	SigReqSelect   = "reqSelect"
+	SigReqCreate   = "reqCreate"
+	SigEdit        = "Edit"
+	SigDelete      = "Delete"
+	SigCurl        = "cURL"
+	SigAbout       = "About"
+)
+
 var (
 	version string = "edge"
 
@@ -30,6 +46,24 @@ type Signal struct {
 	Err     error
 }
 
+func (app *App) handleNavigation(sig string) bool {
+	switch sig {
+	case SigHome, SigBackHome:
+		Banner()
+		go app.Home()
+		return true
+	case SigBrowse, SigBackRequests:
+		Banner()
+		go app.Requests()
+		return true
+	case SigExit:
+		fmt.Print("\033[H\033[2J")
+		os.Exit(0)
+		return true
+	}
+	return false
+}
+
 /*
 Run
 Main run application method
@@ -42,50 +76,35 @@ func (app *App) Run() {
 
 	for {
 		sig := <-app.SigChan
+		if app.handleNavigation(sig.Sig) {
+			continue
+		}
 		switch sig.Sig {
-		case "Home", "Back to Home Menu":
-			Banner()
-			go app.Home()
-		case "Browse requests", "Back to requests":
-			Banner()
-			go app.Requests()
-		case "Exit":
-			fmt.Print("\033[H\033[2J")
-			os.Exit(1)
-		case "Create request":
+		case SigCreate:
 			Banner()
 			go app.Create()
-		case "Run":
+		case SigRun:
 			Banner()
 			go app.RunRequest(sig.Meta)
-		case "reqSelect":
-			switch sig.Meta {
-			case "Home", "Back to Home Menu":
-				Banner()
-				go app.Home()
-			case "Browse requests", "Back to requests":
-				Banner()
-				go app.Requests()
-			case "Exit":
-				fmt.Print("\033[H\033[2J")
-				os.Exit(1)
-			default:
+		case SigReqSelect:
+			if !app.handleNavigation(sig.Meta) {
 				Banner()
 				go app.Request(sig.Meta, sig.Display)
 			}
-
-		case "reqCreate":
+		case SigReqCreate:
 			Banner()
 			go app.Request(sig.Meta, sig.Display)
-		case "Edit":
+		case SigCurl:
+			Banner()
+			go app.ShowCurl(sig.Meta)
+		case SigEdit:
 			Banner()
 			go app.Edit(sig.Meta)
-		case "Delete":
+		case SigDelete:
 			Banner()
 			go app.Delete(sig.Meta)
-		case "About":
+		case SigAbout:
 			go app.About()
-
 		}
 	}
 }
@@ -105,7 +124,7 @@ func (app *App) Home() error {
 			Name: "home",
 			Prompt: &survey.Select{
 				Message: home,
-				Options: []string{"Browse requests", "Create request", "About", "Exit"},
+				Options: []string{SigBrowse, SigCreate, SigAbout, SigExit},
 			},
 			Validate: survey.Required,
 		},
@@ -138,8 +157,8 @@ Display all available requests previously created by the user
 */
 func (app *App) Requests() error {
 
-	var reqList = []string{"Back to Home Menu"}
-	for r, _ := range app.Database.Data {
+	var reqList = []string{SigBackHome}
+	for r := range app.Database.Data {
 		reqList = append(reqList, r)
 	}
 
@@ -166,7 +185,7 @@ func (app *App) Requests() error {
 	}
 
 	sig := Signal{
-		Sig:     "reqSelect",
+		Sig:     SigReqSelect,
 		Meta:    answers.Requests,
 		Display: true,
 	}
@@ -186,7 +205,7 @@ func (app *App) Request(reqName string, display bool) error {
 		{
 			Name: "request",
 			Prompt: &survey.Select{
-				Options: []string{"Run", "Edit", "Delete", "Back to requests", "Exit"},
+				Options: []string{SigRun, SigCurl, SigEdit, SigDelete, SigBackRequests, SigExit},
 			},
 			Validate: survey.Required,
 		},
@@ -233,7 +252,6 @@ func (app *App) RunRequest(reqName string) error {
 			{
 				Name: "back",
 				Prompt: &survey.Select{
-					// showingHelp: false,
 					Options: []string{fmt.Sprintf("Back to %v request", reqName)},
 				},
 				Validate: survey.Required,
@@ -252,7 +270,7 @@ func (app *App) RunRequest(reqName string) error {
 
 		sig := Signal{
 			Meta:    reqName,
-			Sig:     "reqSelect",
+			Sig:     SigReqSelect,
 			Display: true,
 		}
 
@@ -305,10 +323,54 @@ func (app *App) RunRequest(reqName string) error {
 
 	sig := Signal{
 		Meta:    reqName,
-		Sig:     "reqSelect",
+		Sig:     SigReqSelect,
 		Display: true,
 	}
 	app.SigChan <- sig
+	return nil
+}
+
+/*
+ShowCurl
+Display formatted curl command for a request
+*/
+func (app *App) ShowCurl(reqName string) error {
+	r := app.Database.Data[reqName]
+	curlCmd := r.CurlCommand()
+
+	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
+	fmt.Println(string(color.ColorBlue), "cURL command : ", string(color.ColorReset))
+	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
+	fmt.Println(string(color.ColorWhite), curlCmd, string(color.ColorReset))
+	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
+	fmt.Println("")
+
+	var menu = []*survey.Question{
+		{
+			Name: "back",
+			Prompt: &survey.Select{
+				Options: []string{fmt.Sprintf("Back to %v request", reqName), SigBackRequests, SigBackHome},
+			},
+			Validate: survey.Required,
+		},
+	}
+
+	answers := struct {
+		Back string
+	}{}
+
+	err := survey.Ask(menu, &answers)
+	if err != nil {
+		app.ErrorHandler(err)
+		return err
+	}
+
+	switch answers.Back {
+	case SigBackRequests, SigBackHome:
+		app.SigChan <- Signal{Sig: answers.Back}
+	default:
+		app.SigChan <- Signal{Meta: reqName, Sig: SigReqSelect, Display: true}
+	}
 	return nil
 }
 
@@ -361,7 +423,7 @@ func (app *App) Create() error {
 	var body = []*survey.Question{}
 
 	switch genericAnswer.Method {
-	case "GET":
+	case "GET", "DELETE":
 		body = []*survey.Question{
 			{
 				Name: "params",
@@ -385,7 +447,7 @@ func (app *App) Create() error {
 			},
 		}
 
-	case "POST":
+	case "POST", "PUT":
 		dfltPayload := map[string]interface{}{"foo": "bar"}
 		jsonDfltPayload, _ := json.MarshalIndent(dfltPayload, "", "    ")
 		body = []*survey.Question{
@@ -408,38 +470,6 @@ func (app *App) Create() error {
 				},
 			},
 		}
-	default:
-		fmtError := fmt.Sprintf("Sorry, %v method is not yet implemented. Available methods: GET, POST.", genericAnswer.Method)
-		fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
-
-		var menu = []*survey.Question{
-			{
-				Name: "back",
-				Prompt: &survey.Select{
-					// showingHelp: false,
-					Options: []string{"Back to home"},
-				},
-				Validate: survey.Required,
-			},
-		}
-
-		answers := struct {
-			Back string
-		}{}
-
-		err := survey.Ask(menu, &answers)
-		if err != nil {
-			app.ErrorHandler(err)
-			return err
-		}
-
-		sig := Signal{
-			Sig:     "Home",
-			Display: true,
-		}
-
-		app.SigChan <- sig
-		return nil
 	}
 
 	var headers = []*survey.Question{
@@ -476,7 +506,7 @@ func (app *App) Create() error {
 	}
 
 	sig := Signal{
-		Sig:     "reqCreate",
+		Sig:     SigReqCreate,
 		Meta:    genericAnswer.Name,
 		Display: true,
 	}
@@ -489,7 +519,7 @@ func (app *App) Create() error {
 	}
 
 	switch R.Method {
-	case "GET":
+	case "GET", "DELETE":
 		if bodyAnswers.Params != "" {
 			var jsonData map[string]interface{}
 			json.Unmarshal([]byte(bodyAnswers.Params), &jsonData)
@@ -498,7 +528,7 @@ func (app *App) Create() error {
 		} else {
 			R.Params = map[string]interface{}{}
 		}
-	case "POST":
+	case "POST", "PUT":
 		if bodyAnswers.Payload != "" {
 			var jsonData map[string]interface{}
 			json.Unmarshal([]byte(bodyAnswers.Payload), &jsonData)
@@ -520,7 +550,9 @@ func (app *App) Create() error {
 
 	// Save request in local database
 	app.Database.Data[R.Name] = R
-	app.Database.Save()
+	if err := app.Database.Save(); err != nil {
+		return err
+	}
 
 	app.SigChan <- sig
 
@@ -540,7 +572,6 @@ func (app *App) Edit(reqName string) error {
 	content := ""
 
 	var menu = &survey.Editor{
-		// Message:       "Edit : ",
 		FileName:      "http-tanker-edit*.json",
 		Default:       string(jsonReq),
 		AppendDefault: true,
@@ -553,14 +584,25 @@ func (app *App) Edit(reqName string) error {
 		return err
 	}
 	var updateReq core.Request
-	json.Unmarshal([]byte(content), &updateReq)
+	if err := json.Unmarshal([]byte(content), &updateReq); err != nil {
+		fmtError := fmt.Sprintf("Invalid JSON: %v", err.Error())
+		fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
+		return app.Edit(reqName)
+	}
 
+	if updateReq.Name != reqName {
+		delete(app.Database.Data, reqName)
+	}
 	app.Database.Data[updateReq.Name] = updateReq
-	app.Database.Save()
-	app.Database.Load()
+	if err := app.Database.Save(); err != nil {
+		return err
+	}
+	if err := app.Database.Load(); err != nil {
+		return err
+	}
 
 	sig := Signal{
-		Sig:     "reqCreate",
+		Sig:     SigReqCreate,
 		Meta:    updateReq.Name,
 		Display: true,
 	}
@@ -602,7 +644,10 @@ func (app *App) Delete(reqName string) error {
 
 	switch answers.ConfirmDelete {
 	case true:
-		app.Database.Delete(reqName)
+		if err := app.Database.Delete(reqName); err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
 		message := fmt.Sprintf("The request %v was successfully deleted", reqName)
 		fmt.Println("")
 		fmt.Println(string(color.ColorGreen), message, string(color.ColorReset))
@@ -613,7 +658,7 @@ func (app *App) Delete(reqName string) error {
 		{
 			Name: "back",
 			Prompt: &survey.Select{
-				Options: []string{"Back to Home Menu", "Back to requests", "Exit"},
+				Options: []string{SigBackHome, SigBackRequests, SigExit},
 			},
 			Validate: survey.Required,
 		},
@@ -651,8 +696,7 @@ func (app *App) About() error {
 		{
 			Name: "home",
 			Prompt: &survey.Select{
-				// showingHelp: false,
-				Options: []string{"Back to Home Menu"},
+				Options: []string{SigBackHome},
 			},
 			Validate: survey.Required,
 		},
@@ -669,7 +713,7 @@ func (app *App) About() error {
 	}
 
 	sig := Signal{
-		Sig: "Home",
+		Sig: SigHome,
 	}
 
 	app.SigChan <- sig
@@ -691,7 +735,7 @@ func Banner() {
 Error handler
 */
 
-func (app *App) ErrorHandler(err error) {
+func (app *App) ErrorHandler(err error) error {
 	fmtError := fmt.Sprintf("ERROR : %v", err.Error())
 	fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
 
@@ -699,7 +743,7 @@ func (app *App) ErrorHandler(err error) {
 		{
 			Name: "back",
 			Prompt: &survey.Select{
-				Options: []string{"Back to Home Menu", "Back to requests", "Exit"},
+				Options: []string{SigBackHome, SigBackRequests, SigExit},
 			},
 			Validate: survey.Required,
 		},
@@ -709,7 +753,10 @@ func (app *App) ErrorHandler(err error) {
 		Back string
 	}{}
 
-	survey.Ask(menu, &back)
+	if menuErr := survey.Ask(menu, &back); menuErr != nil {
+		app.SigChan <- Signal{Sig: SigHome, Err: err}
+		return menuErr
+	}
 
 	sig := Signal{
 		Sig: back.Back,
@@ -717,4 +764,5 @@ func (app *App) ErrorHandler(err error) {
 	}
 
 	app.SigChan <- sig
+	return nil
 }

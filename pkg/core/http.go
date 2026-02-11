@@ -2,6 +2,7 @@ package core
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"github.com/PierreKieffer/http-tanker/pkg/color"
@@ -24,6 +25,11 @@ type Response struct {
 
 func (r *Request) CallHTTP() (string, error) {
 	client := &http.Client{Timeout: 30 * time.Second}
+	if r.Insecure {
+		client.Transport = &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+	}
 
 	var body io.Reader
 	switch r.Method {
@@ -106,37 +112,32 @@ func BuildResponse(resp *http.Response, duration int64) (Response, error) {
 }
 
 func DisplayResponse(r Response) {
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-	fmt.Println(string(color.ColorBlue), "Response details : ", string(color.ColorReset))
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-	status := fmt.Sprintf("Status : %v", r.Status)
-	statusCode := fmt.Sprintf("Status code : %v", r.StatusCode)
-	proto := fmt.Sprintf("Protocol : %v", r.Proto)
-	execTime := fmt.Sprintf("Execution time : %v ms", r.ExecutionTimeMillisec)
-	StringSeparatorDisplay(status)
-	StringSeparatorDisplay(statusCode)
-	StringSeparatorDisplay(proto)
+	statusColor := color.StatusCodeColor(r.StatusCode)
+	var lines []string
+	lines = append(lines, fmt.Sprintf("Status         : %s%v%s", statusColor, r.Status, color.ColorReset))
+	lines = append(lines, fmt.Sprintf("Status code    : %s%v%s", statusColor, r.StatusCode, color.ColorReset))
+	lines = append(lines, fmt.Sprintf("Protocol       : %v", r.Proto))
 	if len(r.Headers) > 0 {
-		jsonHeaders, _ := json.Marshal(r.Headers)
-		headers := fmt.Sprintf("Headers : %s", string(jsonHeaders))
-		StringSeparatorDisplay(headers)
+		jsonHeaders, _ := json.MarshalIndent(r.Headers, "", "    ")
+		lines = append(lines, fmt.Sprintf("Headers :\n%s", string(jsonHeaders)))
 	}
 	if r.Body != "" {
-		body := fmt.Sprintf("Body : %v", r.Body)
-		StringSeparatorDisplay(body)
+		lines = append(lines, fmt.Sprintf("Body : %v", r.Body))
 	} else if r.JsonBody != nil {
 		jsonBody, _ := json.MarshalIndent(r.JsonBody, "", "    ")
-		body := fmt.Sprintf("Body : %v", string(jsonBody))
-		StringSeparatorDisplay(body)
+		lines = append(lines, fmt.Sprintf("Body :\n%s", string(jsonBody)))
 	}
-	StringSeparatorDisplay(execTime)
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-	fmt.Println("")
+	lines = append(lines, fmt.Sprintf("Execution time : %v ms", r.ExecutionTimeMillisec))
+	DrawBox("Response details", lines)
 }
 
 func (r *Request) CurlCommand() string {
 	var parts []string
-	parts = append(parts, "curl", "-X", r.Method)
+	parts = append(parts, "curl")
+	if r.Insecure {
+		parts = append(parts, "-k")
+	}
+	parts = append(parts, "-X", r.Method)
 
 	// Build URL with query params
 	targetURL := r.URL

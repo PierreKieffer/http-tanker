@@ -6,16 +6,18 @@ import (
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"io"
 	"os"
+	"strings"
 	"sync"
 )
 
 type Request struct {
-	Name    string                 `json:"name"`
-	Method  string                 `json:"method"`
-	URL     string                 `json:"url"`
-	Params  map[string]interface{} `json:"params,omitempty"`
-	Payload map[string]interface{} `json:"payload,omitempty"`
-	Headers map[string]interface{} `json:"headers"`
+	Name     string                 `json:"name"`
+	Method   string                 `json:"method"`
+	URL      string                 `json:"url"`
+	Params   map[string]interface{} `json:"params,omitempty"`
+	Payload  map[string]interface{} `json:"payload,omitempty"`
+	Headers  map[string]interface{} `json:"headers"`
+	Insecure bool                   `json:"insecure,omitempty"`
 }
 
 type Database struct {
@@ -180,36 +182,50 @@ func (db *Database) Display(requestName string) error {
 
 	r := db.Data[requestName]
 
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-	fmt.Println(string(color.ColorBlue), "Request details : ", string(color.ColorReset))
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-
-	name := fmt.Sprintf("Name : %s", r.Name)
-	method := fmt.Sprintf("Method : %s", r.Method)
-	url := fmt.Sprintf("URL : %s", r.URL)
-	StringSeparatorDisplay(name)
-	StringSeparatorDisplay(method)
-	StringSeparatorDisplay(url)
+	var lines []string
+	lines = append(lines, fmt.Sprintf("Name   : %s", r.Name))
+	lines = append(lines, fmt.Sprintf("Method : %s%s%s", color.MethodColor(r.Method), r.Method, color.ColorReset))
+	lines = append(lines, fmt.Sprintf("URL    : %s", r.URL))
 	if len(r.Params) > 0 {
 		jsonParams, _ := json.MarshalIndent(r.Params, "", "    ")
-		params := fmt.Sprintf("Params :\n%s", string(jsonParams))
-		StringSeparatorDisplay(params)
+		lines = append(lines, fmt.Sprintf("Params :\n%s", string(jsonParams)))
 	}
 	if len(r.Payload) > 0 {
 		jsonPayload, _ := json.MarshalIndent(r.Payload, "", "    ")
-		payload := fmt.Sprintf("Payload :\n%s", string(jsonPayload))
-		StringSeparatorDisplay(payload)
+		lines = append(lines, fmt.Sprintf("Payload :\n%s", string(jsonPayload)))
 	}
 	if len(r.Headers) > 0 {
 		jsonHeaders, _ := json.MarshalIndent(r.Headers, "", "    ")
-		headers := fmt.Sprintf("Headers :\n%s", string(jsonHeaders))
-		StringSeparatorDisplay(headers)
+		lines = append(lines, fmt.Sprintf("Headers :\n%s", string(jsonHeaders)))
 	}
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-	fmt.Println("")
+	if r.Insecure {
+		lines = append(lines, "Insecure : true (TLS verification skipped)")
+	}
+	DrawBox("Request details", lines)
 
 	return nil
 }
-func StringSeparatorDisplay(s string) {
-	fmt.Println(string(color.ColorWhite), s, string(color.ColorReset))
+const boxWidth = 50
+
+func DrawBox(title string, content []string) {
+	hLine := strings.Repeat("─", boxWidth)
+
+	// Title box
+	fmt.Printf("%s┌%s┐%s\n", color.ColorGrey, hLine, color.ColorReset)
+	titlePad := boxWidth - len([]rune(title)) - 1
+	if titlePad < 0 {
+		titlePad = 0
+	}
+	fmt.Printf("%s│%s %s%*s%s│%s\n", color.ColorGrey, color.ColorBlue, title, titlePad, "", color.ColorGrey, color.ColorReset)
+	fmt.Printf("%s└%s┘%s\n", color.ColorGrey, hLine, color.ColorReset)
+
+	// Content
+	for _, line := range content {
+		for _, sub := range strings.Split(line, "\n") {
+			fmt.Printf(" %s%s%s\n", color.ColorWhite, sub, color.ColorReset)
+		}
+	}
+
+	// Bottom separator
+	fmt.Printf("%s %s%s\n\n", color.ColorGrey, hLine, color.ColorReset)
 }

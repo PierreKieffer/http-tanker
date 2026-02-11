@@ -9,6 +9,7 @@ import (
 	"github.com/PierreKieffer/http-tanker/pkg/core"
 	"os"
 	"reflect"
+	"time"
 )
 
 const (
@@ -158,8 +159,11 @@ Display all available requests previously created by the user
 func (app *App) Requests() error {
 
 	var reqList = []string{SigBackHome}
-	for r := range app.Database.Data {
-		reqList = append(reqList, r)
+	displayToName := make(map[string]string)
+	for name, r := range app.Database.Data {
+		label := fmt.Sprintf("[%s] %s - %s", r.Method, name, r.URL)
+		reqList = append(reqList, label)
+		displayToName[label] = name
 	}
 
 	var menu = []*survey.Question{
@@ -184,9 +188,14 @@ func (app *App) Requests() error {
 		return err
 	}
 
+	selected := answers.Requests
+	if name, ok := displayToName[selected]; ok {
+		selected = name
+	}
+
 	sig := Signal{
 		Sig:     SigReqSelect,
-		Meta:    answers.Requests,
+		Meta:    selected,
 		Display: true,
 	}
 
@@ -243,7 +252,28 @@ Execute HTTP request, display response
 */
 func (app *App) RunRequest(reqName string) error {
 	r := app.Database.Data[reqName]
+
+	// Spinner pendant l'execution
+	spinChars := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+	stopSpinner := make(chan struct{})
+	go func() {
+		i := 0
+		for {
+			select {
+			case <-stopSpinner:
+				fmt.Print("\r\033[K")
+				return
+			default:
+				fmt.Printf("\r%s %sExecuting request...%s", spinChars[i%len(spinChars)], color.ColorCyan, color.ColorReset)
+				i++
+				time.Sleep(80 * time.Millisecond)
+			}
+		}
+	}()
+
 	resp, err := r.CallHTTP()
+	close(stopSpinner)
+	time.Sleep(100 * time.Millisecond)
 	if err != nil {
 		fmtError := fmt.Sprintf("ERROR : %v", err.Error())
 		fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
@@ -338,12 +368,7 @@ func (app *App) ShowCurl(reqName string) error {
 	r := app.Database.Data[reqName]
 	curlCmd := r.CurlCommand()
 
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-	fmt.Println(string(color.ColorBlue), "cURL command : ", string(color.ColorReset))
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-	fmt.Println(string(color.ColorWhite), curlCmd, string(color.ColorReset))
-	fmt.Println(string(color.ColorGrey), "------------------------------------------------", string(color.ColorReset))
-	fmt.Println("")
+	core.DrawBox("cURL command", []string{curlCmd})
 
 	var menu = []*survey.Question{
 		{
@@ -505,6 +530,25 @@ func (app *App) Create() error {
 		return err
 	}
 
+	// Ask for TLS verification skip
+	insecureAnswer := struct {
+		Insecure bool
+	}{}
+	insecureMenu := []*survey.Question{
+		{
+			Name: "insecure",
+			Prompt: &survey.Confirm{
+				Message: "Skip TLS certificate verification ?",
+				Default: false,
+			},
+		},
+	}
+	err = survey.Ask(insecureMenu, &insecureAnswer)
+	if err != nil {
+		app.ErrorHandler(err)
+		return err
+	}
+
 	sig := Signal{
 		Sig:     SigReqCreate,
 		Meta:    genericAnswer.Name,
@@ -513,9 +557,10 @@ func (app *App) Create() error {
 
 	// Build Request object
 	var R = core.Request{
-		Name:   genericAnswer.Name,
-		Method: genericAnswer.Method,
-		URL:    genericAnswer.Url,
+		Name:     genericAnswer.Name,
+		Method:   genericAnswer.Method,
+		URL:      genericAnswer.Url,
+		Insecure: insecureAnswer.Insecure,
 	}
 
 	switch R.Method {

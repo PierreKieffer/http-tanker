@@ -17,6 +17,34 @@ const (
 	ColorGrey   = "\033[90m"
 )
 
+func StatusCodeColor(code int) string {
+	switch {
+	case code >= 200 && code < 300:
+		return ColorGreen
+	case code >= 300 && code < 400:
+		return ColorYellow
+	case code >= 400:
+		return ColorRed
+	default:
+		return ColorWhite
+	}
+}
+
+func MethodColor(method string) string {
+	switch method {
+	case "GET":
+		return ColorCyan
+	case "POST":
+		return ColorGreen
+	case "PUT":
+		return ColorYellow
+	case "DELETE":
+		return ColorRed
+	default:
+		return ColorWhite
+	}
+}
+
 func Is256ColorSupported() bool {
 	if strings.Contains(os.Getenv("TERM"), "256") || strings.Contains(os.Getenv("COLORTERM"), "256") {
 		return true

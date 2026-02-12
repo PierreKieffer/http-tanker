@@ -72,6 +72,64 @@ Custom database location:
 tanker -db /path/to/custom/dir
 ```
 
+## MCP Server
+
+http-tanker includes a built-in [MCP](https://modelcontextprotocol.io/) (Model Context Protocol) server, allowing AI assistants like Claude to manage and execute your HTTP requests through natural language.
+
+### Setup
+
+Add the following configuration to your MCP client settings (e.g. `.mcp.json` for Claude Code):
+
+```json
+{
+  "mcpServers": {
+    "http-tanker": {
+      "type": "stdio",
+      "command": "go",
+      "args": ["run", ".", "--mcp"]
+    }
+  }
+}
+```
+
+Or using a pre-built binary:
+
+```json
+{
+  "mcpServers": {
+    "http-tanker": {
+      "type": "stdio",
+      "command": "/path/to/tanker",
+      "args": ["--mcp"]
+    }
+  }
+}
+```
+
+### Available tools
+
+| Tool | Description |
+|------|-------------|
+| `list_requests` | List all saved HTTP requests |
+| `get_request` | Get full details of a saved request |
+| `save_request` | Create or update a saved request |
+| `delete_request` | Delete a saved request |
+| `send_request` | Execute a saved request and return the response |
+| `send_custom_request` | Execute an ad-hoc HTTP request without saving it |
+| `curl_command` | Generate the equivalent cURL command for a saved request |
+
+### Usage examples
+
+Once configured, you can interact with http-tanker through your AI assistant:
+
+- *"List all my saved requests"*
+- *"Create a POST request to https://api.example.com/users with a JSON body"*
+- *"Execute the get-users request"*
+- *"Show me the cURL command for my post-example request"*
+- *"Delete the request named old-test"*
+
+The MCP server shares the same JSON database (`~/.http-tanker/http-tanker-data.json`) as the terminal UI, so requests created in one mode are available in the other.
+
 ## Built with
 
 - [AlecAivazis/survey](https://github.com/AlecAivazis/survey)

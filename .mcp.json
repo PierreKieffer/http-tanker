@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "http-tanker": {
+      "type": "stdio",
+      "command": "go",
+      "args": ["run", ".", "--mcp"]
+    }
+  }
+}

@@ -7,6 +7,7 @@ import (
 	"github.com/PierreKieffer/http-tanker/pkg/cli"
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"github.com/PierreKieffer/http-tanker/pkg/core"
+	tankerMcp "github.com/PierreKieffer/http-tanker/pkg/mcp"
 	"github.com/mgutz/ansi"
 	"os"
 	"os/user"
@@ -37,7 +38,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	databaseDir := flag.String("db", fmt.Sprintf("%v/http-tanker", localUser.HomeDir), "tanker database directory")
+	databaseDir := flag.String("db", fmt.Sprintf("%v/.http-tanker", localUser.HomeDir), "tanker database directory")
+	mcpMode := flag.Bool("mcp", false, "start as MCP server (stdio transport)")
 	flag.Parse()
 
 	database := &core.Database{
@@ -49,6 +51,14 @@ func main() {
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Failed to initialize database: %v\n", err)
 		os.Exit(1)
+	}
+
+	if *mcpMode {
+		if err := tankerMcp.Serve(database); err != nil {
+			fmt.Fprintf(os.Stderr, "MCP server error: %v\n", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	app := &cli.App{

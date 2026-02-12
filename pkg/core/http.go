@@ -4,11 +4,11 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"fmt"
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -23,12 +23,20 @@ type Response struct {
 	ExecutionTimeMillisec int64                  `json:"executionTimeMillisec,omitempty"`
 }
 
-func (r *Request) CallHTTP() (string, error) {
-	client := &http.Client{Timeout: 30 * time.Second}
-	if r.Insecure {
-		client.Transport = &http.Transport{
+var (
+	defaultClient = &http.Client{Timeout: 30 * time.Second}
+	insecureClient = &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-		}
+		},
+	}
+)
+
+func (r *Request) CallHTTP() (Response, error) {
+	client := defaultClient
+	if r.Insecure {
+		client = insecureClient
 	}
 
 	var body io.Reader
@@ -36,14 +44,14 @@ func (r *Request) CallHTTP() (string, error) {
 	case "POST", "PUT":
 		jsonPayload, err := json.Marshal(r.Payload)
 		if err != nil {
-			return "", err
+			return Response{}, err
 		}
 		body = bytes.NewBuffer(jsonPayload)
 	}
 
 	req, err := http.NewRequest(r.Method, r.URL, body)
 	if err != nil {
-		return "", err
+		return Response{}, err
 	}
 
 	if len(r.Params) > 0 {
@@ -67,7 +75,7 @@ func (r *Request) CallHTTP() (string, error) {
 	start := time.Now()
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", err
+		return Response{}, err
 	}
 	defer resp.Body.Close()
 
@@ -75,16 +83,10 @@ func (r *Request) CallHTTP() (string, error) {
 
 	response, err := BuildResponse(resp, duration.Milliseconds())
 	if err != nil {
-		return "", err
-	}
-	DisplayResponse(response)
-
-	fmtStringResponse, err := json.MarshalIndent(response, "", "    ")
-	if err != nil {
-		return "", err
+		return Response{}, err
 	}
 
-	return string(fmtStringResponse), nil
+	return response, nil
 }
 
 func BuildResponse(resp *http.Response, duration int64) (Response, error) {
@@ -114,25 +116,25 @@ func BuildResponse(resp *http.Response, duration int64) (Response, error) {
 func DisplayResponse(r Response) {
 	statusColor := color.StatusCodeColor(r.StatusCode)
 	var lines []string
-	lines = append(lines, fmt.Sprintf("Status         : %s%v%s", statusColor, r.Status, color.ColorReset))
-	lines = append(lines, fmt.Sprintf("Status code    : %s%v%s", statusColor, r.StatusCode, color.ColorReset))
-	lines = append(lines, fmt.Sprintf("Protocol       : %v", r.Proto))
+	lines = append(lines, "Status         : "+statusColor+r.Status+color.ColorReset)
+	lines = append(lines, "Status code    : "+statusColor+strconv.Itoa(r.StatusCode)+color.ColorReset)
+	lines = append(lines, "Protocol       : "+r.Proto)
 	if len(r.Headers) > 0 {
 		jsonHeaders, _ := json.MarshalIndent(r.Headers, "", "    ")
-		lines = append(lines, fmt.Sprintf("Headers :\n%s", string(jsonHeaders)))
+		lines = append(lines, "Headers :\n"+string(jsonHeaders))
 	}
 	if r.Body != "" {
-		lines = append(lines, fmt.Sprintf("Body : %v", r.Body))
+		lines = append(lines, "Body : "+r.Body)
 	} else if r.JsonBody != nil {
 		jsonBody, _ := json.MarshalIndent(r.JsonBody, "", "    ")
-		lines = append(lines, fmt.Sprintf("Body :\n%s", string(jsonBody)))
+		lines = append(lines, "Body :\n"+string(jsonBody))
 	}
-	lines = append(lines, fmt.Sprintf("Execution time : %v ms", r.ExecutionTimeMillisec))
+	lines = append(lines, "Execution time : "+strconv.FormatInt(r.ExecutionTimeMillisec, 10)+" ms")
 	DrawBox("Response details", lines)
 }
 
 func (r *Request) CurlCommand() string {
-	var parts []string
+	parts := make([]string, 0, 6+2*len(r.Headers))
 	parts = append(parts, "curl")
 	if r.Insecure {
 		parts = append(parts, "-k")
@@ -150,13 +152,13 @@ func (r *Request) CurlCommand() string {
 		}
 		targetURL = targetURL + "?" + q.Encode()
 	}
-	parts = append(parts, fmt.Sprintf("'%s'", targetURL))
+	parts = append(parts, "'"+targetURL+"'")
 
 	// Headers
 	if len(r.Headers) > 0 {
 		for k, v := range r.Headers {
 			if s, ok := v.(string); ok {
-				parts = append(parts, "-H", fmt.Sprintf("'%s: %s'", k, s))
+				parts = append(parts, "-H", "'"+k+": "+s+"'")
 			}
 		}
 	}
@@ -166,7 +168,7 @@ func (r *Request) CurlCommand() string {
 	case "POST", "PUT":
 		if len(r.Payload) > 0 {
 			jsonPayload, _ := json.Marshal(r.Payload)
-			parts = append(parts, "-d", fmt.Sprintf("'%s'", string(jsonPayload)))
+			parts = append(parts, "-d", "'"+string(jsonPayload)+"'")
 		}
 	}
 

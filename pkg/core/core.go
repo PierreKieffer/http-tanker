@@ -66,19 +66,28 @@ func (db *Database) loadLocked() error {
 			"get-example": {
 				Name:   "get-example",
 				Method: "GET",
-				URL:    "http://localhost:8080/get",
+				URL:    "https://httpbin.org/get",
 				Params: map[string]interface{}{
 					"foo":   "bar",
 					"count": "42",
 				},
 				Headers: map[string]interface{}{
-					"Authorization": "secret",
+					"Accept": "application/json",
+				},
+			},
+			"get-https-insecure": {
+				Name:     "get-https-insecure",
+				Method:   "GET",
+				URL:      "https://self-signed.badssl.com/",
+				Insecure: true,
+				Headers: map[string]interface{}{
+					"Accept": "text/html",
 				},
 			},
 			"post-example": {
 				Name:   "post-example",
 				Method: "POST",
-				URL:    "http://localhost:8080/post",
+				URL:    "https://httpbin.org/post",
 				Payload: map[string]interface{}{
 					"languages": []map[string]interface{}{
 						{
@@ -103,7 +112,7 @@ func (db *Database) loadLocked() error {
 				},
 				Headers: map[string]interface{}{
 					"Content-Type":  "application/json",
-					"Authorization": "secret",
+					"Accept":        "application/json",
 				},
 			},
 		}
@@ -169,50 +178,45 @@ func (db *Database) Delete(reqName string) error {
 	db.mu.Lock()
 	defer db.mu.Unlock()
 	delete(db.Data, reqName)
-	if err := db.saveLocked(); err != nil {
-		return err
-	}
-	return db.loadLocked()
+	return db.saveLocked()
 }
 
 /*
 Display request
 */
-func (db *Database) Display(requestName string) error {
+func (db *Database) Display(requestName string) {
 
 	r := db.Data[requestName]
 
 	var lines []string
-	lines = append(lines, fmt.Sprintf("Name   : %s", r.Name))
-	lines = append(lines, fmt.Sprintf("Method : %s%s%s", color.MethodColor(r.Method), r.Method, color.ColorReset))
-	lines = append(lines, fmt.Sprintf("URL    : %s", r.URL))
+	lines = append(lines, "Name   : "+r.Name)
+	lines = append(lines, "Method : "+color.MethodColor(r.Method)+r.Method+color.ColorReset)
+	lines = append(lines, "URL    : "+r.URL)
 	if len(r.Params) > 0 {
 		jsonParams, _ := json.MarshalIndent(r.Params, "", "    ")
-		lines = append(lines, fmt.Sprintf("Params :\n%s", string(jsonParams)))
+		lines = append(lines, "Params :\n"+string(jsonParams))
 	}
 	if len(r.Payload) > 0 {
 		jsonPayload, _ := json.MarshalIndent(r.Payload, "", "    ")
-		lines = append(lines, fmt.Sprintf("Payload :\n%s", string(jsonPayload)))
+		lines = append(lines, "Payload :\n"+string(jsonPayload))
 	}
 	if len(r.Headers) > 0 {
 		jsonHeaders, _ := json.MarshalIndent(r.Headers, "", "    ")
-		lines = append(lines, fmt.Sprintf("Headers :\n%s", string(jsonHeaders)))
+		lines = append(lines, "Headers :\n"+string(jsonHeaders))
 	}
 	if r.Insecure {
 		lines = append(lines, "Insecure : true (TLS verification skipped)")
 	}
 	DrawBox("Request details", lines)
-
-	return nil
 }
-const boxWidth = 50
+const BoxWidth = 50
 
 func DrawBox(title string, content []string) {
-	hLine := strings.Repeat("─", boxWidth)
+	hLine := strings.Repeat("─", BoxWidth)
 
 	// Title box
 	fmt.Printf("%s┌%s┐%s\n", color.ColorGrey, hLine, color.ColorReset)
-	titlePad := boxWidth - len([]rune(title)) - 1
+	titlePad := BoxWidth - len([]rune(title)) - 1
 	if titlePad < 0 {
 		titlePad = 0
 	}

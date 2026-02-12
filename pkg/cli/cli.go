@@ -9,6 +9,7 @@ import (
 	"github.com/PierreKieffer/http-tanker/pkg/core"
 	"os"
 	"reflect"
+	"strings"
 	"time"
 )
 
@@ -33,6 +34,9 @@ var (
 
 	//go:embed assets/*
 	assets embed.FS
+
+	bannerBytes, _ = assets.ReadFile("assets/banner")
+	aboutBytes, _  = assets.ReadFile("assets/about")
 )
 
 type App struct {
@@ -44,7 +48,6 @@ type Signal struct {
 	Meta    string
 	Sig     string
 	Display bool
-	Err     error
 }
 
 func (app *App) handleNavigation(sig string) bool {
@@ -116,15 +119,12 @@ Display Home menu options
 */
 func (app *App) Home() error {
 
-	home := ` -------------
-   | Home Menu |
-   -------------
-	`
+	core.DrawBox("Home Menu", nil)
 	var menu = []*survey.Question{
 		{
 			Name: "home",
 			Prompt: &survey.Select{
-				Message: home,
+				Message: "Select :",
 				Options: []string{SigBrowse, SigCreate, SigAbout, SigExit},
 			},
 			Validate: survey.Required,
@@ -158,19 +158,21 @@ Display all available requests previously created by the user
 */
 func (app *App) Requests() error {
 
-	var reqList = []string{SigBackHome}
-	displayToName := make(map[string]string)
+	reqList := make([]string, 0, len(app.Database.Data)+1)
+	reqList = append(reqList, SigBackHome)
+	displayToName := make(map[string]string, len(app.Database.Data))
 	for name, r := range app.Database.Data {
-		label := fmt.Sprintf("[%s] %s - %s", r.Method, name, r.URL)
+		label := "[" + r.Method + "] " + name + " - " + r.URL
 		reqList = append(reqList, label)
 		displayToName[label] = name
 	}
 
+	core.DrawBox("Requests", nil)
 	var menu = []*survey.Question{
 		{
 			Name: "requests",
 			Prompt: &survey.Select{
-				Message: "---- Requests ----",
+				Message: "Select :",
 				Options: reqList,
 			},
 			Validate: survey.Required,
@@ -257,32 +259,33 @@ func (app *App) RunRequest(reqName string) error {
 	spinChars := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 	stopSpinner := make(chan struct{})
 	go func() {
+		ticker := time.NewTicker(80 * time.Millisecond)
+		defer ticker.Stop()
 		i := 0
 		for {
 			select {
 			case <-stopSpinner:
 				fmt.Print("\r\033[K")
 				return
-			default:
+			case <-ticker.C:
 				fmt.Printf("\r%s %sExecuting request...%s", spinChars[i%len(spinChars)], color.ColorCyan, color.ColorReset)
 				i++
-				time.Sleep(80 * time.Millisecond)
 			}
 		}
 	}()
 
-	resp, err := r.CallHTTP()
+	response, err := r.CallHTTP()
 	close(stopSpinner)
 	time.Sleep(100 * time.Millisecond)
 	if err != nil {
-		fmtError := fmt.Sprintf("ERROR : %v", err.Error())
-		fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
+		fmtError := "ERROR : " + err.Error()
+		fmt.Println(color.ColorRed, fmtError, color.ColorReset)
 
 		var menu = []*survey.Question{
 			{
 				Name: "back",
 				Prompt: &survey.Select{
-					Options: []string{fmt.Sprintf("Back to %v request", reqName)},
+					Options: []string{"Back to " + reqName + " request"},
 				},
 				Validate: survey.Required,
 			},
@@ -308,6 +311,8 @@ func (app *App) RunRequest(reqName string) error {
 		return err
 	}
 
+	core.DisplayResponse(response)
+
 	// Ask if user wants to inspect response
 	var menu = []*survey.Question{
 		{
@@ -330,21 +335,21 @@ func (app *App) RunRequest(reqName string) error {
 		return err
 	}
 
-	switch answers.InspectResponse {
-	case true:
-		/*
-		   Inspect Response
-		   Open response in editor to inspect
-		*/
+	if answers.InspectResponse {
+		jsonResp, err := json.MarshalIndent(response, "", "    ")
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
 		var content string
 		var menu = &survey.Editor{
 			FileName:      "http-tanker-response-inspector*.json",
-			Default:       resp,
+			Default:       string(jsonResp),
 			AppendDefault: true,
 			HideDefault:   true,
 		}
 
-		err := survey.AskOne(menu, &content)
+		err = survey.AskOne(menu, &content)
 		if err != nil {
 			app.ErrorHandler(err)
 			return err
@@ -374,7 +379,7 @@ func (app *App) ShowCurl(reqName string) error {
 		{
 			Name: "back",
 			Prompt: &survey.Select{
-				Options: []string{fmt.Sprintf("Back to %v request", reqName), SigBackRequests, SigBackHome},
+				Options: []string{"Back to " + reqName + " request", SigBackRequests, SigBackHome},
 			},
 			Validate: survey.Required,
 		},
@@ -464,7 +469,7 @@ func (app *App) Create() error {
 					}
 					for k, v := range jsonData {
 						if reflect.TypeOf(v).String() != "string" {
-							return fmt.Errorf("Wront value type for param %v : %v. Type must be a string", k, reflect.TypeOf(v).String())
+							return fmt.Errorf("Wrong value type for param %v : %v. Type must be a string", k, reflect.TypeOf(v).String())
 						}
 					}
 					return nil
@@ -612,53 +617,51 @@ func (app *App) Edit(reqName string) error {
 	app.Database.Display(reqName)
 
 	req := app.Database.Data[reqName]
-	jsonReq, _ := json.MarshalIndent(req, "", "    ")
+	editorDefault, _ := json.MarshalIndent(req, "", "    ")
 
-	content := ""
+	for {
+		content := ""
 
-	var menu = &survey.Editor{
-		FileName:      "http-tanker-edit*.json",
-		Default:       string(jsonReq),
-		AppendDefault: true,
-		HideDefault:   true,
+		menu := &survey.Editor{
+			FileName:      "http-tanker-edit*.json",
+			Default:       string(editorDefault),
+			AppendDefault: true,
+			HideDefault:   true,
+		}
+
+		err := survey.AskOne(menu, &content)
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
+		var updateReq core.Request
+		if err := json.Unmarshal([]byte(content), &updateReq); err != nil {
+			fmt.Println(color.ColorRed, fmt.Sprintf("Invalid JSON: %v", err.Error()), color.ColorReset)
+			editorDefault = []byte(content)
+			continue
+		}
+
+		if updateReq.Name != reqName {
+			delete(app.Database.Data, reqName)
+		}
+		app.Database.Data[updateReq.Name] = updateReq
+		if err := app.Database.Save(); err != nil {
+			return err
+		}
+
+		sig := Signal{
+			Sig:     SigReqCreate,
+			Meta:    updateReq.Name,
+			Display: true,
+		}
+
+		message := "The request " + reqName + " has been edited successfully"
+		fmt.Println("")
+		fmt.Println(color.ColorGreen, message, color.ColorReset)
+		app.SigChan <- sig
+
+		return nil
 	}
-
-	err := survey.AskOne(menu, &content)
-	if err != nil {
-		app.ErrorHandler(err)
-		return err
-	}
-	var updateReq core.Request
-	if err := json.Unmarshal([]byte(content), &updateReq); err != nil {
-		fmtError := fmt.Sprintf("Invalid JSON: %v", err.Error())
-		fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
-		return app.Edit(reqName)
-	}
-
-	if updateReq.Name != reqName {
-		delete(app.Database.Data, reqName)
-	}
-	app.Database.Data[updateReq.Name] = updateReq
-	if err := app.Database.Save(); err != nil {
-		return err
-	}
-	if err := app.Database.Load(); err != nil {
-		return err
-	}
-
-	sig := Signal{
-		Sig:     SigReqCreate,
-		Meta:    updateReq.Name,
-		Display: true,
-	}
-
-	message := fmt.Sprintf("The request %v has been edited successfully", reqName)
-	fmt.Println("")
-	fmt.Println(string(color.ColorGreen), message, string(color.ColorReset))
-	app.SigChan <- sig
-
-	return nil
-
 }
 
 /*
@@ -670,7 +673,7 @@ func (app *App) Delete(reqName string) error {
 		{
 			Name: "confirmDelete",
 			Prompt: &survey.Confirm{
-				Message: fmt.Sprintf("This will delete the request : %v. Continue ?", reqName),
+				Message: "This will delete the request : " + reqName + ". Continue ?",
 				Default: false,
 			},
 			Validate: survey.Required,
@@ -687,15 +690,14 @@ func (app *App) Delete(reqName string) error {
 		return err
 	}
 
-	switch answers.ConfirmDelete {
-	case true:
+	if answers.ConfirmDelete {
 		if err := app.Database.Delete(reqName); err != nil {
 			app.ErrorHandler(err)
 			return err
 		}
-		message := fmt.Sprintf("The request %v was successfully deleted", reqName)
+		message := "The request " + reqName + " was successfully deleted"
 		fmt.Println("")
-		fmt.Println(string(color.ColorGreen), message, string(color.ColorReset))
+		fmt.Println(color.ColorGreen, message, color.ColorReset)
 		fmt.Println("")
 	}
 
@@ -733,8 +735,7 @@ About
 func (app *App) About() error {
 
 	Banner()
-	aboutBuffer, _ := assets.ReadFile("assets/about")
-	fmt.Println(string(aboutBuffer))
+	fmt.Println(string(aboutBytes))
 	fmt.Println("")
 
 	var menu = []*survey.Question{
@@ -770,10 +771,11 @@ Banner
 */
 func Banner() {
 	fmt.Print("\033[H\033[2J")
-	bannerBuffer, _ := assets.ReadFile("assets/banner")
-	fmt.Println(string(bannerBuffer))
-	fmt.Println(string(color.ColorGrey), fmt.Sprintf("  version : %v", version), string(color.ColorReset))
-	fmt.Print("\n")
+	hLine := strings.Repeat("─", core.BoxWidth)
+	fmt.Printf("%s %s%s\n", color.ColorGrey, hLine, color.ColorReset)
+	fmt.Print(string(bannerBytes))
+	fmt.Printf(" %sversion : %v%s\n", color.ColorGrey, version, color.ColorReset)
+	fmt.Printf("%s %s%s\n\n", color.ColorGrey, hLine, color.ColorReset)
 }
 
 /*
@@ -781,8 +783,8 @@ Error handler
 */
 
 func (app *App) ErrorHandler(err error) error {
-	fmtError := fmt.Sprintf("ERROR : %v", err.Error())
-	fmt.Println(string(color.ColorRed), fmtError, string(color.ColorReset))
+	fmtError := "ERROR : " + err.Error()
+	fmt.Println(color.ColorRed, fmtError, color.ColorReset)
 
 	menu := []*survey.Question{
 		{
@@ -799,13 +801,12 @@ func (app *App) ErrorHandler(err error) error {
 	}{}
 
 	if menuErr := survey.Ask(menu, &back); menuErr != nil {
-		app.SigChan <- Signal{Sig: SigHome, Err: err}
+		app.SigChan <- Signal{Sig: SigHome}
 		return menuErr
 	}
 
 	sig := Signal{
 		Sig: back.Back,
-		Err: err,
 	}
 
 	app.SigChan <- sig

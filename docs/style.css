@@ -81,8 +81,13 @@ a:hover {
 
 .navbar-links {
   display: flex;
+  align-items: center;
   gap: 24px;
   list-style: none;
+}
+
+.navbar-links svg {
+  display: block;
 }
 
 .navbar-links a {

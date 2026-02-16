@@ -23,6 +23,7 @@ Create, manage and execute HTTP requests directly from your terminal.
 - **HTTP Methods** — GET, POST, PUT, DELETE
 - **Request management** — Create, edit, delete and browse saved requests
 - **Response inspector** — View response details (status, headers, body, execution time) and inspect in editor
+- **Binary download** — Binary responses (images, PDFs, archives, ...) are streamed directly to disk without loading into memory, then saved to a location of your choice
 - **cURL export** — Generate the equivalent cURL command for any saved request
 - **HTTPS insecure mode** — Skip TLS certificate verification for self-signed certificates
 - **Custom database path** — Store requests in a custom location with the `-db` flag
@@ -72,6 +73,32 @@ Custom database location:
 tanker -db /path/to/custom/dir
 ```
 
+## Binary download
+
+When a response contains binary content (detected via `Content-Type`), http-tanker streams the body directly to a temporary file on disk instead of loading it into memory. This allows downloading large files (images, PDFs, archives, ...) without excessive RAM usage.
+
+The response metadata (status, headers, content type, size) is displayed, then you are prompted to save the file to a location of your choice:
+
+```
+┌──────────────────────────────────────────────────┐
+│ Response details                                 │
+╰──────────────────────────────────────────────────╯
+ Status         : 200 OK
+ Content-Type   : image/png
+ Size           : 8.1 KB
+ Body           : [Binary content]
+? Save file locally ? Yes
+? Save to : ~/Downloads/image.png
+ File saved to ~/Downloads/image.png
+```
+
+A built-in example request `download-image-example` is included in the default database to try this feature:
+
+```
+GET https://httpbin.org/image/png
+Headers: {"Accept": "image/png"}
+```
+
 ## MCP Server
 
 http-tanker includes a built-in [MCP](https://modelcontextprotocol.io/) (Model Context Protocol) server, allowing AI assistants like Claude to manage and execute your HTTP requests through natural language.
@@ -114,8 +141,8 @@ Or using a pre-built binary:
 | `get_request` | Get full details of a saved request |
 | `save_request` | Create or update a saved request |
 | `delete_request` | Delete a saved request |
-| `send_request` | Execute a saved request and return the response |
-| `send_custom_request` | Execute an ad-hoc HTTP request without saving it |
+| `send_request` | Execute a saved request and return the response. Use `output_file` to save binary responses to disk |
+| `send_custom_request` | Execute an ad-hoc HTTP request without saving it. Use `output_file` to save binary responses to disk |
 | `curl_command` | Generate the equivalent cURL command for a saved request |
 
 ### Usage examples
@@ -127,6 +154,7 @@ Once configured, you can interact with http-tanker through your AI assistant:
 - *"Execute the get-users request"*
 - *"Show me the cURL command for my post-example request"*
 - *"Delete the request named old-test"*
+- *"Download the image from download-image-example and save it to /tmp/image.png"*
 
 The MCP server shares the same JSON database (`~/.http-tanker/http-tanker-data.json`) as the terminal UI, so requests created in one mode are available in the other.
 

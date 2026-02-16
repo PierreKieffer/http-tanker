@@ -109,10 +109,11 @@ func getRequestHandler(db *core.Database) server.ToolHandlerFunc {
 
 func sendRequestTool() mcp.Tool {
 	return mcp.NewTool("send_request",
-		mcp.WithDescription("Execute a saved HTTP request by name and return the response"),
+		mcp.WithDescription("Execute a saved HTTP request by name and return the response. For binary responses (images, PDFs, archives...), only metadata is returned. Use output_file to save binary content to disk."),
 		mcp.WithDestructiveHintAnnotation(false),
 		mcp.WithOpenWorldHintAnnotation(true),
 		mcp.WithString("name", mcp.Required(), mcp.Description("Name of the saved request to execute")),
+		mcp.WithString("output_file", mcp.Description("File path to save binary response content (e.g. /tmp/image.png). Only used for binary responses.")),
 	)
 }
 
@@ -137,7 +138,8 @@ func sendRequestHandler(db *core.Database) server.ToolHandlerFunc {
 			return mcp.NewToolResultError(fmt.Sprintf("HTTP request failed: %v", err)), nil
 		}
 
-		return mcp.NewToolResultJSON(resp)
+		outputFile := request.GetString("output_file", "")
+		return formatResponseResult(resp, outputFile)
 	}
 }
 
@@ -145,7 +147,7 @@ func sendRequestHandler(db *core.Database) server.ToolHandlerFunc {
 
 func sendCustomRequestTool() mcp.Tool {
 	return mcp.NewTool("send_custom_request",
-		mcp.WithDescription("Execute an ad-hoc HTTP request without saving it"),
+		mcp.WithDescription("Execute an ad-hoc HTTP request without saving it. For binary responses (images, PDFs, archives...), only metadata is returned. Use output_file to save binary content to disk."),
 		mcp.WithDestructiveHintAnnotation(false),
 		mcp.WithOpenWorldHintAnnotation(true),
 		mcp.WithString("method", mcp.Required(), mcp.Description("HTTP method"), mcp.Enum("GET", "POST", "PUT", "DELETE")),
@@ -154,6 +156,7 @@ func sendCustomRequestTool() mcp.Tool {
 		mcp.WithString("payload", mcp.Description("Request body as a JSON object string (for POST/PUT)")),
 		mcp.WithString("headers", mcp.Description("HTTP headers as a JSON object string, e.g. {\"Content-Type\": \"application/json\"}")),
 		mcp.WithBoolean("insecure", mcp.Description("Skip TLS certificate verification (default: false)")),
+		mcp.WithString("output_file", mcp.Description("File path to save binary response content (e.g. /tmp/image.png). Only used for binary responses.")),
 	)
 }
 
@@ -193,7 +196,8 @@ func sendCustomRequestHandler(db *core.Database) server.ToolHandlerFunc {
 			return mcp.NewToolResultError(fmt.Sprintf("HTTP request failed: %v", err)), nil
 		}
 
-		return mcp.NewToolResultJSON(resp)
+		outputFile := request.GetString("output_file", "")
+		return formatResponseResult(resp, outputFile)
 	}
 }
 
@@ -330,6 +334,34 @@ func curlCommandHandler(db *core.Database) server.ToolHandlerFunc {
 }
 
 // --- helpers ---
+
+func formatResponseResult(resp core.Response, outputFile string) (*mcp.CallToolResult, error) {
+	contentType := resp.Headers.Get("Content-Type")
+	if !core.IsTextContent(contentType) && contentType != "" {
+		result := map[string]interface{}{
+			"status":                resp.Status,
+			"statusCode":            resp.StatusCode,
+			"proto":                 resp.Proto,
+			"headers":               resp.Headers,
+			"contentType":           resp.ContentType,
+			"bodySize":              resp.BodySize,
+			"body":                  "[Binary content not included]",
+			"executionTimeMillisec": resp.ExecutionTimeMillisec,
+		}
+
+		if outputFile != "" && resp.IsBinaryContent() {
+			if err := resp.SaveToFile(outputFile); err != nil {
+				result["saveError"] = err.Error()
+			} else {
+				result["savedTo"] = outputFile
+			}
+		}
+		resp.Cleanup()
+
+		return mcp.NewToolResultJSON(result)
+	}
+	return mcp.NewToolResultJSON(resp)
+}
 
 func parseOptionalJSON(request mcp.CallToolRequest, key string, target *map[string]interface{}) error {
 	str := request.GetString(key, "")

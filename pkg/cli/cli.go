@@ -4,13 +4,20 @@ import (
 	"embed"
 	"encoding/json"
 	"fmt"
+	"mime"
+	"net/url"
+	"os"
+	"path"
+	"path/filepath"
+	"reflect"
+	"strings"
+
 	"github.com/AlecAivazis/survey/v2"
 	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"github.com/PierreKieffer/http-tanker/pkg/core"
-	"os"
-	"reflect"
-	"strings"
-	"time"
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
 const (
@@ -42,6 +49,48 @@ var (
 type App struct {
 	SigChan  chan Signal
 	Database *core.Database
+}
+
+type httpResult struct {
+	resp core.Response
+	err  error
+}
+
+type httpResultMsg httpResult
+
+type spinnerModel struct {
+	spinner spinner.Model
+	done    bool
+	result  httpResult
+	callFn  func() (core.Response, error)
+}
+
+func (m spinnerModel) Init() tea.Cmd {
+	return tea.Batch(m.spinner.Tick, func() tea.Msg {
+		resp, err := m.callFn()
+		return httpResultMsg{resp: resp, err: err}
+	})
+}
+
+func (m spinnerModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case httpResultMsg:
+		m.done = true
+		m.result = httpResult(msg)
+		return m, tea.Quit
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.spinner, cmd = m.spinner.Update(msg)
+		return m, cmd
+	}
+	return m, nil
+}
+
+func (m spinnerModel) View() string {
+	if m.done {
+		return ""
+	}
+	return m.spinner.View() + " " + color.Yellow.Render("Executing request...")
 }
 
 type Signal struct {
@@ -255,31 +304,25 @@ Execute HTTP request, display response
 func (app *App) RunRequest(reqName string) error {
 	r := app.Database.Data[reqName]
 
-	// Spinner pendant l'execution
-	spinChars := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-	stopSpinner := make(chan struct{})
-	go func() {
-		ticker := time.NewTicker(80 * time.Millisecond)
-		defer ticker.Stop()
-		i := 0
-		for {
-			select {
-			case <-stopSpinner:
-				fmt.Print("\r\033[K")
-				return
-			case <-ticker.C:
-				fmt.Printf("\r%s %sExecuting request...%s", spinChars[i%len(spinChars)], color.ColorCyan, color.ColorReset)
-				i++
-			}
-		}
-	}()
+	s := spinner.New()
+	s.Spinner = spinner.Points
+	s.Style = lipgloss.NewStyle().Foreground(lipgloss.Color("11"))
 
-	response, err := r.CallHTTP()
-	close(stopSpinner)
-	time.Sleep(100 * time.Millisecond)
+	m := spinnerModel{
+		spinner: s,
+		callFn:  r.CallHTTP,
+	}
+
+	finalModel, teaErr := tea.NewProgram(m).Run()
+	if teaErr != nil {
+		fmt.Println(color.Red.Render("ERROR : " + teaErr.Error()))
+		return teaErr
+	}
+
+	result := finalModel.(spinnerModel).result
+	response, err := result.resp, result.err
 	if err != nil {
-		fmtError := "ERROR : " + err.Error()
-		fmt.Println(color.ColorRed, fmtError, color.ColorReset)
+		fmt.Println(color.Red.Render("ERROR : " + err.Error()))
 
 		var menu = []*survey.Question{
 			{
@@ -313,46 +356,89 @@ func (app *App) RunRequest(reqName string) error {
 
 	core.DisplayResponse(response)
 
-	// Ask if user wants to inspect response
-	var menu = []*survey.Question{
-		{
-			Name: "inspectResponse",
-			Prompt: &survey.Confirm{
-				Message: "Inspect response in editor ?",
-				Default: false,
+	if response.IsBinaryContent() {
+		// Propose to save binary content
+		saveAnswer := struct {
+			Save bool
+		}{}
+		saveMenu := []*survey.Question{
+			{
+				Name: "save",
+				Prompt: &survey.Confirm{
+					Message: "Save file locally ?",
+					Default: true,
+				},
 			},
-			Validate: survey.Required,
-		},
-	}
-
-	answers := struct {
-		InspectResponse bool
-	}{}
-
-	err = survey.Ask(menu, &answers)
-	if err != nil {
-		app.ErrorHandler(err)
-		return err
-	}
-
-	if answers.InspectResponse {
-		jsonResp, err := json.MarshalIndent(response, "", "    ")
+		}
+		err = survey.Ask(saveMenu, &saveAnswer)
 		if err != nil {
 			app.ErrorHandler(err)
 			return err
 		}
-		var content string
-		var menu = &survey.Editor{
-			FileName:      "http-tanker-response-inspector*.json",
-			Default:       string(jsonResp),
-			AppendDefault: true,
-			HideDefault:   true,
+		if saveAnswer.Save {
+			defaultPath := suggestFilename(r.URL, response)
+			var savePath string
+			pathPrompt := &survey.Input{
+				Message: "Save to :",
+				Default: defaultPath,
+			}
+			err = survey.AskOne(pathPrompt, &savePath)
+			if err != nil {
+				response.Cleanup()
+				app.ErrorHandler(err)
+				return err
+			}
+			if err := response.SaveToFile(savePath); err != nil {
+				fmt.Println(color.Red.Render("ERROR : " + err.Error()))
+				response.Cleanup()
+			} else {
+				fmt.Println(color.Green.Render("File saved to " + savePath))
+			}
+		} else {
+			response.Cleanup()
+		}
+	} else {
+		// Ask if user wants to inspect response
+		var menu = []*survey.Question{
+			{
+				Name: "inspectResponse",
+				Prompt: &survey.Confirm{
+					Message: "Inspect response in editor ?",
+					Default: false,
+				},
+				Validate: survey.Required,
+			},
 		}
 
-		err = survey.AskOne(menu, &content)
+		answers := struct {
+			InspectResponse bool
+		}{}
+
+		err = survey.Ask(menu, &answers)
 		if err != nil {
 			app.ErrorHandler(err)
 			return err
+		}
+
+		if answers.InspectResponse {
+			jsonResp, err := json.MarshalIndent(response, "", "    ")
+			if err != nil {
+				app.ErrorHandler(err)
+				return err
+			}
+			var content string
+			var menu = &survey.Editor{
+				FileName:      "http-tanker-response-inspector*.json",
+				Default:       string(jsonResp),
+				AppendDefault: true,
+				HideDefault:   true,
+			}
+
+			err = survey.AskOne(menu, &content)
+			if err != nil {
+				app.ErrorHandler(err)
+				return err
+			}
 		}
 	}
 
@@ -636,7 +722,7 @@ func (app *App) Edit(reqName string) error {
 		}
 		var updateReq core.Request
 		if err := json.Unmarshal([]byte(content), &updateReq); err != nil {
-			fmt.Println(color.ColorRed, fmt.Sprintf("Invalid JSON: %v", err.Error()), color.ColorReset)
+			fmt.Println(color.Red.Render(fmt.Sprintf("Invalid JSON: %v", err.Error())))
 			editorDefault = []byte(content)
 			continue
 		}
@@ -656,8 +742,8 @@ func (app *App) Edit(reqName string) error {
 		}
 
 		message := "The request " + reqName + " has been edited successfully"
-		fmt.Println("")
-		fmt.Println(color.ColorGreen, message, color.ColorReset)
+		fmt.Println()
+		fmt.Println(color.Green.Render(message))
 		app.SigChan <- sig
 
 		return nil
@@ -696,9 +782,9 @@ func (app *App) Delete(reqName string) error {
 			return err
 		}
 		message := "The request " + reqName + " was successfully deleted"
-		fmt.Println("")
-		fmt.Println(color.ColorGreen, message, color.ColorReset)
-		fmt.Println("")
+		fmt.Println()
+		fmt.Println(color.Green.Render(message))
+		fmt.Println()
 	}
 
 	menu = []*survey.Question{
@@ -772,10 +858,11 @@ Banner
 func Banner() {
 	fmt.Print("\033[H\033[2J")
 	hLine := strings.Repeat("─", core.BoxWidth)
-	fmt.Printf("%s %s%s\n", color.ColorGrey, hLine, color.ColorReset)
+	fmt.Println(color.Grey.Render(" " + hLine))
 	fmt.Print(string(bannerBytes))
-	fmt.Printf(" %sversion : %v%s\n", color.ColorGrey, version, color.ColorReset)
-	fmt.Printf("%s %s%s\n\n", color.ColorGrey, hLine, color.ColorReset)
+	fmt.Println(color.Grey.Render(fmt.Sprintf(" version : %v", version)))
+	fmt.Println(color.Grey.Render(" " + hLine))
+	fmt.Println()
 }
 
 /*
@@ -783,8 +870,7 @@ Error handler
 */
 
 func (app *App) ErrorHandler(err error) error {
-	fmtError := "ERROR : " + err.Error()
-	fmt.Println(color.ColorRed, fmtError, color.ColorReset)
+	fmt.Println(color.Red.Render("ERROR : " + err.Error()))
 
 	menu := []*survey.Question{
 		{
@@ -811,4 +897,37 @@ func (app *App) ErrorHandler(err error) error {
 
 	app.SigChan <- sig
 	return nil
+}
+
+func suggestFilename(rawURL string, resp core.Response) string {
+	homeDir, _ := os.UserHomeDir()
+	downloadsDir := filepath.Join(homeDir, "Downloads")
+
+	// Try Content-Disposition header
+	if cd := resp.Headers.Get("Content-Disposition"); cd != "" {
+		if _, params, err := mime.ParseMediaType(cd); err == nil {
+			if filename, ok := params["filename"]; ok && filename != "" {
+				return filepath.Join(downloadsDir, filename)
+			}
+		}
+	}
+
+	// Try last segment of URL path
+	if u, err := url.Parse(rawURL); err == nil {
+		base := path.Base(u.Path)
+		if base != "" && base != "." && base != "/" {
+			return filepath.Join(downloadsDir, base)
+		}
+	}
+
+	// Fallback
+	ext := ""
+	ct := strings.ToLower(resp.ContentType)
+	if i := strings.Index(ct, ";"); i != -1 {
+		ct = strings.TrimSpace(ct[:i])
+	}
+	if exts, err := mime.ExtensionsByType(ct); err == nil && len(exts) > 0 {
+		ext = exts[0]
+	}
+	return filepath.Join(downloadsDir, "download"+ext)
 }

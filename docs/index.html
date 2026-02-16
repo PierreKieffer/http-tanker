@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>http-tanker — Lightweight Terminal HTTP Client</title>
+  <meta name="description" content="A lightweight terminal HTTP client for API testing. Create, manage and execute HTTP requests directly from your terminal.">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <div class="navbar-inner">
+    <a href="#hero" class="navbar-brand">http-tanker</a>
+    <button class="nav-toggle" aria-label="Toggle navigation">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <ul class="navbar-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#installation">Installation</a></li>
+      <li><a href="#quickstart">Quick Start</a></li>
+      <li><a href="#examples">Examples</a></li>
+      <li><a href="#mcp">MCP Server</a></li>
+      <li><a href="https://github.com/PierreKieffer/http-tanker" target="_blank" rel="noopener" aria-label="GitHub"><svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg></a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ── Hero ── -->
+<section id="hero" class="hero">
+  <div class="container">
+<pre class="hero-ascii">  _   _   _            _             _
+ | |_| |_| |_ _ __ ___| |_ __ _ _ _ | |_____ _ _
+ | ' \  _|  _| '_ \___|  _/ _` | ' \| / / -_) '_|
+ |_||_\__|\__| .__/    \__\__,_|_||_|_\_\___|_|
+             |_|</pre>
+    <h1 class="hero-tagline">A lightweight terminal HTTP client for API testing</h1>
+    <p class="hero-description">Create, manage and execute HTTP requests directly from your terminal. Includes a built-in MCP server for AI assistant integration.</p>
+    <div class="hero-buttons">
+      <a href="#installation" class="btn btn-primary">Get Started</a>
+      <a href="https://github.com/PierreKieffer/http-tanker" class="btn btn-outline" target="_blank" rel="noopener">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        View on GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Features ── -->
+<section id="features">
+  <div class="container">
+    <h2 class="section-title">Features</h2>
+    <p class="section-subtitle">Everything you need to test APIs from your terminal</p>
+    <div class="features-grid">
+
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12h-8l-2 3h-2l-2-3H1"/><path d="M5.45 5.11L2 12v6a2 2 0 002 2h16a2 2 0 002-2v-6l-3.45-6.89A2 2 0 0016.76 4H7.24a2 2 0 00-1.79 1.11z"/></svg>
+        <h3>HTTP Methods</h3>
+        <p>Full support for GET, POST, PUT and DELETE requests with custom headers and JSON payloads.</p>
+      </div>
+
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        <h3>Request Management</h3>
+        <p>Create, edit, delete and browse saved requests. All persisted locally in JSON format.</p>
+      </div>
+
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+        <h3>Response Inspector</h3>
+        <p>View response details including status, headers, body and execution time. Inspect in your editor.</p>
+      </div>
+
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <h3>Binary Download</h3>
+        <p>Binary responses are streamed directly to disk without loading into memory. Save files to any location.</p>
+      </div>
+
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/><line x1="14" y1="4" x2="10" y2="20"/></svg>
+        <h3>cURL Export</h3>
+        <p>Generate the equivalent cURL command for any saved request. Copy and share effortlessly.</p>
+      </div>
+
+      <div class="feature-card">
+        <svg class="feature-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+        <h3>HTTPS Insecure Mode</h3>
+        <p>Skip TLS certificate verification for testing with self-signed certificates.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Installation ── -->
+<section id="installation">
+  <div class="container">
+    <h2 class="section-title">Installation</h2>
+    <p class="section-subtitle">Get up and running in seconds</p>
+    <div class="install-grid">
+
+      <div class="install-panel">
+        <h3>Pre-built binaries</h3>
+        <p>Pre-built binaries for Linux and macOS (amd64 and arm64). No Go installation required.</p>
+        <table class="platform-table">
+          <thead>
+            <tr><th>Platform</th><th>Binary</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Linux (amd64)</td><td><code>tanker-linux-amd64</code></td></tr>
+            <tr><td>Linux (arm64)</td><td><code>tanker-linux-arm64</code></td></tr>
+            <tr><td>macOS (amd64)</td><td><code>tanker-darwin-amd64</code></td></tr>
+            <tr><td>macOS (arm64)</td><td><code>tanker-darwin-arm64</code></td></tr>
+          </tbody>
+        </table>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>bash</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre><span class="token-comment"># Example for macOS arm64</span>
+cp bin/tanker-darwin-arm64 /usr/local/bin/tanker
+chmod +x /usr/local/bin/tanker</pre>
+        </div>
+      </div>
+
+      <div class="install-panel">
+        <h3>Build from source</h3>
+        <p>Requires Go 1.21+.</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>bash</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre>git clone https://github.com/PierreKieffer/http-tanker.git
+cd http-tanker
+./build.sh v0.1.0</pre>
+        </div>
+        <p>The binaries are generated in the <code style="color:var(--accent-green);font-family:var(--font-mono);font-size:0.85rem;">bin/</code> directory.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Quick Start ── -->
+<section id="quickstart">
+  <div class="container">
+    <h2 class="section-title">Quick Start</h2>
+    <p class="section-subtitle">Launch the interactive terminal UI</p>
+    <div class="quickstart-blocks">
+
+      <div>
+        <p>Start http-tanker with the default database:</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>bash</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre>tanker</pre>
+        </div>
+      </div>
+
+      <div>
+        <p>Use a custom database location:</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>bash</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre>tanker <span class="token-flag">-db</span> /path/to/custom/dir</pre>
+        </div>
+      </div>
+
+      <div>
+        <p>Start the MCP server for AI assistant integration:</p>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>bash</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre>tanker <span class="token-flag">--mcp</span></pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── CLI Examples ── -->
+<section id="examples">
+  <div class="container">
+    <h2 class="section-title">CLI Examples</h2>
+    <p class="section-subtitle">See http-tanker in action</p>
+    <div class="examples-blocks">
+
+      <div class="example-item">
+        <h3>Home menu</h3>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>tanker</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre> ──────────────────────────────────────────────────
+  _   _   _            _             _
+ | |_| |_| |_ _ __ ___| |_ __ _ _ _ | |_____ _ _
+ | ' \  _|  _| '_ \___|  _/ _` | ' \| / / -_) '_|
+ |_||_\__|\__| .__/    \__\__,_|_||_|_\_\___|_|
+             |_|
+ <span class="token-label">version</span> : edge
+ ──────────────────────────────────────────────────
+
+╭──────────────────────────────────────────────────╮
+│ Home Menu                                        │
+╰──────────────────────────────────────────────────╯
+ ──────────────────────────────────────────────────
+
+<span class="token-command">?</span> Select :  [Use arrows to move, type to filter]
+<span class="token-status">&gt; Browse requests</span>
+  Create request
+  About
+  Exit</pre>
+        </div>
+      </div>
+
+      <div class="example-item">
+        <h3>Browse requests</h3>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>tanker</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre>╭──────────────────────────────────────────────────╮
+│ Requests                                         │
+╰──────────────────────────────────────────────────╯
+ ──────────────────────────────────────────────────
+
+<span class="token-command">?</span> Select :  [Use arrows to move, type to filter]
+<span class="token-status">&gt; Back to Home Menu</span>
+  [GET] get-example - https://httpbin.org/get
+  [GET] get-https-insecure - https://self-signed.badssl.com/
+  [POST] post-example - https://httpbin.org/post
+  [GET] download-image-example - https://httpbin.org/image/png</pre>
+        </div>
+      </div>
+
+      <div class="example-item">
+        <h3>Create request</h3>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>tanker</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre><span class="token-command">?</span> Name :  <span class="token-value">foobar</span>
+<span class="token-command">?</span> Method :  <span class="token-value">POST</span>
+<span class="token-command">?</span> URL :  <span class="token-value">https://foobar/post</span>
+<span class="token-command">?</span> Payload <span class="token-label">(Enter the payload in json format {"key": "value"})</span> :
+ <span class="token-label">[Enter to launch editor]</span>
+<span class="token-command">?</span> Headers <span class="token-label">(Enter the headers in json format {"key": "value"}, default = {})</span> :
+ <span class="token-value">{"Content-type": "application/json"}</span>
+<span class="token-command">?</span> Skip TLS certificate verification ? <span class="token-label">(y/N)</span> <span class="token-value">y</span></pre>
+        </div>
+      </div>
+
+      <div class="example-item">
+        <h3>Request details</h3>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>tanker</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre>╭──────────────────────────────────────────────────╮
+│ Request details                                  │
+╰──────────────────────────────────────────────────╯
+ <span class="token-label">Name</span>   : foobar
+ <span class="token-label">Method</span> : POST
+ <span class="token-label">URL</span>    : https://foobar/post
+ <span class="token-label">Payload</span> :
+ {
+     <span class="token-key">"foo"</span>: <span class="token-value">"bar"</span>
+ }
+ <span class="token-label">Headers</span> :
+ {
+     <span class="token-key">"Content-type"</span>: <span class="token-value">"application/json"</span>
+ }
+ <span class="token-label">Insecure</span> : <span class="token-flag">true</span> (TLS verification skipped)
+ ──────────────────────────────────────────────────
+
+<span class="token-command">?</span>   [Use arrows to move, type to filter]
+<span class="token-status">&gt; Run</span>
+  cURL
+  Edit
+  Delete
+  Back to requests
+  Exit</pre>
+        </div>
+      </div>
+
+      <div class="example-item">
+        <h3>Response details</h3>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>tanker</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre>╭──────────────────────────────────────────────────╮
+│ Response details                                 │
+╰──────────────────────────────────────────────────╯
+ <span class="token-label">Status</span>         : <span class="token-status">200 OK</span>
+ <span class="token-label">Status code</span>    : 200
+ <span class="token-label">Protocol</span>       : HTTP/2.0
+ <span class="token-label">Headers</span> :
+ {
+     <span class="token-key">"Access-Control-Allow-Credentials"</span>: [
+         <span class="token-value">"true"</span>
+     ],
+     <span class="token-key">"Access-Control-Allow-Origin"</span>: [
+         <span class="token-value">"*"</span>
+     ],
+     <span class="token-key">"Content-Length"</span>: [
+         <span class="token-value">"363"</span>
+     ],
+     <span class="token-key">"Content-Type"</span>: [
+         <span class="token-value">"application/json"</span>
+     ],
+     <span class="token-key">"Date"</span>: [
+         <span class="token-value">"Mon, 16 Feb 2026 13:56:06 GMT"</span>
+     ],
+     <span class="token-key">"Server"</span>: [
+         <span class="token-value">"gunicorn/19.9.0"</span>
+     ]
+ }
+ <span class="token-label">Body</span> :
+ {
+     <span class="token-key">"args"</span>: {
+         <span class="token-key">"count"</span>: <span class="token-value">"42"</span>,
+         <span class="token-key">"foo"</span>: <span class="token-value">"bar"</span>
+     },
+     <span class="token-key">"headers"</span>: {
+         <span class="token-key">"Accept"</span>: <span class="token-value">"application/json"</span>,
+         <span class="token-key">"Accept-Encoding"</span>: <span class="token-value">"gzip"</span>,
+         <span class="token-key">"Host"</span>: <span class="token-value">"httpbin.org"</span>,
+         <span class="token-key">"User-Agent"</span>: <span class="token-value">"Go-http-client/2.0"</span>,
+         <span class="token-key">"X-Amzn-Trace-Id"</span>: <span class="token-value">"Root=1-699321f6-4de146b7397276213e32bb4d"</span>
+     },
+     <span class="token-key">"origin"</span>: <span class="token-value">"5.48.194.113"</span>,
+     <span class="token-key">"url"</span>: <span class="token-value">"https://httpbin.org/get?count=42&amp;foo=bar"</span>
+ }
+ <span class="token-label">Execution time</span> : <span class="token-flag">426 ms</span>
+ ──────────────────────────────────────────────────
+
+<span class="token-command">?</span> Inspect response in editor ? <span class="token-label">(y/N)</span> <span class="token-value">y</span></pre>
+        </div>
+      </div>
+
+      <div class="example-item">
+        <h3>Binary download</h3>
+        <div class="code-block">
+          <div class="code-block-header">
+            <span>tanker</span>
+            <button class="copy-btn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+              Copy
+            </button>
+          </div>
+          <pre>┌──────────────────────────────────────────────────┐
+│ Response details                                 │
+╰──────────────────────────────────────────────────╯
+ <span class="token-label">Status</span>         : <span class="token-status">200 OK</span>
+ <span class="token-label">Content-Type</span>   : image/png
+ <span class="token-label">Size</span>           : 8.1 KB
+ <span class="token-label">Body</span>           : [Binary content]
+<span class="token-command">?</span> Save file locally ? <span class="token-value">Yes</span>
+<span class="token-command">?</span> Save to : <span class="token-value">~/Downloads/image.png</span>
+ File saved to ~/Downloads/image.png</pre>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── MCP Server ── -->
+<section id="mcp">
+  <div class="container">
+    <h2 class="section-title">MCP Server</h2>
+    <p class="section-subtitle">AI-powered HTTP request management</p>
+    <p class="mcp-intro">
+      http-tanker includes a built-in <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener">MCP</a> (Model Context Protocol) server, allowing AI assistants like Claude to manage and execute your HTTP requests through natural language.
+    </p>
+
+    <div class="tools-table-wrapper">
+      <table class="tools-table">
+        <thead>
+          <tr><th>Tool</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>list_requests</code></td><td>List all saved HTTP requests</td></tr>
+          <tr><td><code>get_request</code></td><td>Get full details of a saved request</td></tr>
+          <tr><td><code>save_request</code></td><td>Create or update a saved request</td></tr>
+          <tr><td><code>delete_request</code></td><td>Delete a saved request</td></tr>
+          <tr><td><code>send_request</code></td><td>Execute a saved request and return the response</td></tr>
+          <tr><td><code>send_custom_request</code></td><td>Execute an ad-hoc HTTP request without saving it</td></tr>
+          <tr><td><code>curl_command</code></td><td>Generate the equivalent cURL command for a saved request</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mcp-config-label">Configuration (.mcp.json)</p>
+    <div class="code-block">
+      <div class="code-block-header">
+        <span>json</span>
+        <button class="copy-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
+          Copy
+        </button>
+      </div>
+      <pre>{
+  <span class="token-key">"mcpServers"</span>: {
+    <span class="token-key">"http-tanker"</span>: {
+      <span class="token-key">"type"</span>: <span class="token-value">"stdio"</span>,
+      <span class="token-key">"command"</span>: <span class="token-value">"/path/to/tanker"</span>,
+      <span class="token-key">"args"</span>: [<span class="token-value">"--mcp"</span>]
+    }
+  }
+}</pre>
+    </div>
+  </div>
+</section>
+
+<!-- ── MCP Examples ── -->
+<section id="mcp-examples">
+  <div class="container">
+    <h2 class="section-title">MCP Examples</h2>
+    <p class="section-subtitle">Interact with http-tanker through your AI assistant</p>
+    <div class="mcp-examples-blocks">
+
+      <!-- List requests -->
+      <div class="mcp-example-item">
+        <h3>List saved requests</h3>
+        <div class="claude-terminal">
+          <div class="claude-terminal-header">
+            <span>Claude Code</span>
+          </div>
+          <div class="claude-terminal-body"><span class="ct-dim"> &#9614;&#9611;&#9619;&#9619;&#9619;&#9608;&#9612;   Claude Code v2.1.42</span>
+<span class="ct-dim">&#9621;&#9608;&#9608;&#9608;&#9608;&#9608;&#9611;&#9617;  Opus 4.6 &middot; Claude Pro</span>
+<span class="ct-dim">  &#9617;&#9617; &#9621;&#9621;</span>
+
+<span class="ct-prompt">&#10095;</span> <span class="ct-user-input">List my requests</span>
+
+<span class="ct-tool-call">&#9899; http-tanker - list_requests</span> <span class="ct-tool-badge">(MCP)</span>
+  <span class="ct-collapsed">&#9134;  { "requests": [ { ... +26 lines (ctrl+o to expand) }</span>
+
+<span class="ct-response">&#9899; Here are your saved HTTP requests:</span>
+
+<span class="ct-table">  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+  &#9474;          Name          &#9474; Method &#9474;               URL               &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; foobar                 &#9474; POST   &#9474; https://foobar/post             &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; get-example            &#9474; GET    &#9474; https://httpbin.org/get         &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; get-https-insecure     &#9474; GET    &#9474; https://self-signed.badssl.com/ &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; post-example           &#9474; POST   &#9474; https://httpbin.org/post        &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; download-image-example &#9474; GET    &#9474; https://httpbin.org/image/png   &#9474;
+  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+
+  <span class="ct-dim">You have 5 saved requests.</span></div>
+        </div>
+      </div>
+
+      <!-- Execute request -->
+      <div class="mcp-example-item">
+        <h3>Execute a request</h3>
+        <div class="claude-terminal">
+          <div class="claude-terminal-header">
+            <span>Claude Code</span>
+          </div>
+          <div class="claude-terminal-body"><span class="ct-prompt">&#10095;</span> <span class="ct-user-input">Execute get-example</span>
+
+<span class="ct-tool-call">&#9899; http-tanker - send_request</span> <span class="ct-tool-badge">(MCP)</span><span class="ct-dim">(name: "get-example")</span>
+  <span class="ct-collapsed">&#9134;  { "status": "200 OK", "statusCode": 200, ... +38 lines (ctrl+o to expand) }</span>
+
+<span class="ct-response">&#9899;</span> <span class="ct-success">200 OK</span> <span class="ct-dim">(447ms)</span>
+
+  <span class="ct-heading">Response body:</span>
+  {
+    <span class="token-key">"args"</span>: {
+      <span class="token-key">"count"</span>: <span class="token-value">"42"</span>,
+      <span class="token-key">"foo"</span>: <span class="token-value">"bar"</span>
+    },
+    <span class="token-key">"headers"</span>: {
+      <span class="token-key">"Accept"</span>: <span class="token-value">"application/json"</span>,
+      <span class="token-key">"Accept-Encoding"</span>: <span class="token-value">"gzip"</span>,
+      <span class="token-key">"Host"</span>: <span class="token-value">"httpbin.org"</span>,
+      <span class="token-key">"User-Agent"</span>: <span class="token-value">"Go-http-client/2.0"</span>
+    },
+    <span class="token-key">"origin"</span>: <span class="token-value">"5.48.194.113"</span>,
+    <span class="token-key">"url"</span>: <span class="token-value">"https://httpbin.org/get?count=42&amp;foo=bar"</span>
+  }</div>
+        </div>
+      </div>
+
+      <!-- Binary download -->
+      <div class="mcp-example-item">
+        <h3>Download binary content</h3>
+        <div class="claude-terminal">
+          <div class="claude-terminal-header">
+            <span>Claude Code</span>
+          </div>
+          <div class="claude-terminal-body"><span class="ct-prompt">&#10095;</span> <span class="ct-user-input">execute download-image-example</span>
+
+<span class="ct-tool-call">&#9899; http-tanker - send_request</span> <span class="ct-tool-badge">(MCP)</span><span class="ct-dim">(name: "download-image-example", output_file: "/tmp/image.png")</span>
+  <span class="ct-collapsed">&#9134;  { "body": "[Binary content not included]", "bodySize": 8090, ... +27 lines }</span>
+
+<span class="ct-response">&#9899;</span> <span class="ct-success">200 OK</span> <span class="ct-dim">(107ms)</span>
+
+  - Content-Type: image/png
+  - Size: 8,090 bytes
+  - Saved to: /tmp/image.png
+
+  Let me show you the downloaded image.
+
+<span class="ct-dim">&#9899; Read 1 file (ctrl+o to expand)</span>
+
+<span class="ct-response">&#9899; The image was successfully downloaded.</span></div>
+        </div>
+      </div>
+
+      <!-- Create request -->
+      <div class="mcp-example-item">
+        <h3>Create a request via natural language</h3>
+        <div class="claude-terminal">
+          <div class="claude-terminal-header">
+            <span>Claude Code</span>
+          </div>
+          <div class="claude-terminal-body"><span class="ct-prompt">&#10095;</span> <span class="ct-user-input">Create a POST request to https://api.example.com/users with a JSON body and headers</span>
+
+<span class="ct-separator">&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+<span class="ct-dim">&#8592;  &#9744; Request name  &#9744; Body  &#9744; Headers  &#9744; Params  &#10004; Submit  &#8594;</span>
+
+What name would you like to give this request?
+
+<span class="ct-prompt">&#10095;</span> 1. <span class="ct-user-input">create-user</span>
+<span class="ct-dim">     Descriptive name for creating a user</span>
+  2. post-users
+<span class="ct-dim">     Method-based naming convention</span>
+  3. Type something.
+<span class="ct-separator">&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;</span>
+
+<span class="ct-dim">&#8592;  &#9746; Request name  &#9746; Body  &#9746; Headers  &#9746; Params  &#10004; Submit  &#8594;</span>
+
+<span class="ct-response">&#9899; What payload would you like to use for the request body?</span>
+
+<span class="ct-prompt">&#10095;</span> <span class="ct-user-input">{"name" : "John", "email": "johndoe@mail.com"}</span>
+
+<span class="ct-tool-call">&#9899; http-tanker - save_request</span> <span class="ct-tool-badge">(MCP)</span><span class="ct-dim">(name: "create-user", method: "POST",
+  url: "https://api.example.com/users",
+  payload: "{\"name\": \"John\", \"email\": \"johndoe@mail.com\"}",
+  headers: "{\"Content-Type\": \"application/json\"}")</span>
+  <span class="ct-collapsed">&#9134;  Request "create-user" saved successfully</span>
+
+<span class="ct-response">&#9899;</span> <span class="ct-success">Request create-user saved successfully!</span>
+
+<span class="ct-table">  &#9484;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9516;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9488;
+  &#9474;  Field  &#9474;                     Value                     &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; Name    &#9474; create-user                                   &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; Method  &#9474; POST                                          &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; URL     &#9474; https://api.example.com/users                 &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; Headers &#9474; Content-Type: application/json                &#9474;
+  &#9500;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9532;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9508;
+  &#9474; Body    &#9474; {"name": "John", "email": "johndoe@mail.com"} &#9474;
+  &#9492;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9524;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9472;&#9496;</span>
+
+  <span class="ct-dim">Would you like to execute it?</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer / CTA ── -->
+<section class="footer-cta">
+  <div class="container">
+    <h2>Ready to get started?</h2>
+    <p>Try http-tanker and simplify your API testing workflow.</p>
+    <a href="https://github.com/PierreKieffer/http-tanker" class="btn btn-primary" target="_blank" rel="noopener">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      View on GitHub
+    </a>
+    <div class="footer-meta">
+      <a href="https://github.com/PierreKieffer/http-tanker" target="_blank" rel="noopener">http-tanker</a> &mdash; BSD 2-Clause License
+    </div>
+  </div>
+</section>
+
+<!-- ── Back to top ── -->
+<button class="back-to-top" aria-label="Back to top">
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+</button>
+
+<script src="script.js"></script>
+</body>
+</html>

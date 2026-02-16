@@ -1,53 +1,43 @@
 package color
 
-import (
-	"os"
-	"strings"
+import "github.com/charmbracelet/lipgloss"
+
+var (
+	Red    = lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
+	Green  = lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
+	Yellow = lipgloss.NewStyle().Foreground(lipgloss.Color("11"))
+	Blue   = lipgloss.NewStyle().Foreground(lipgloss.Color("12"))
+	Purple = lipgloss.NewStyle().Foreground(lipgloss.Color("13"))
+	Cyan   = lipgloss.NewStyle().Foreground(lipgloss.Color("14"))
+	White  = lipgloss.NewStyle().Foreground(lipgloss.Color("15"))
+	Grey   = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
+	Bold   = lipgloss.NewStyle().Bold(true)
 )
 
-const (
-	ColorReset  = "\033[0m"
-	ColorRed    = "\033[31m"
-	ColorGreen  = "\033[32m"
-	ColorYellow = "\033[33m"
-	ColorBlue   = "\033[34m"
-	ColorPurple = "\033[35m"
-	ColorCyan   = "\033[36m"
-	ColorWhite  = "\033[37m"
-	ColorGrey   = "\033[90m"
-)
-
-func StatusCodeColor(code int) string {
+func StatusCodeStyle(code int) lipgloss.Style {
 	switch {
 	case code >= 200 && code < 300:
-		return ColorGreen
+		return Green
 	case code >= 300 && code < 400:
-		return ColorYellow
+		return Yellow
 	case code >= 400:
-		return ColorRed
+		return Red
 	default:
-		return ColorWhite
+		return White
 	}
 }
 
-func MethodColor(method string) string {
+func MethodStyle(method string) lipgloss.Style {
 	switch method {
 	case "GET":
-		return ColorCyan
+		return Cyan
 	case "POST":
-		return ColorGreen
+		return Green
 	case "PUT":
-		return ColorYellow
+		return Yellow
 	case "DELETE":
-		return ColorRed
+		return Red
 	default:
-		return ColorWhite
+		return White
 	}
-}
-
-func Is256ColorSupported() bool {
-	if strings.Contains(os.Getenv("TERM"), "256") || strings.Contains(os.Getenv("COLORTERM"), "256") {
-		return true
-	}
-	return false
 }

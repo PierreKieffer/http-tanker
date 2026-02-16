@@ -27,10 +27,10 @@ func TestInitDB(t *testing.T) {
 
 	jsonData, _ := json.Marshal(database.Data)
 
-	must := `{"get-example":{"name":"get-example","method":"GET","url":"https://httpbin.org/get","params":{"count":"42","foo":"bar"},"headers":{"Accept":"application/json"}},"post-example":{"name":"post-example","method":"POST","url":"https://httpbin.org/post","payload":{"count":42,"foo":"bar","languages":[{"name":"Python","staticallyTyped":false},{"name":"Javascript","staticallyTyped":false},{"name":"Golang","staticallyTyped":true},{"name":"Rust","staticallyTyped":true}]},"headers":{"Accept":"application/json","Content-Type":"application/json"}}}`
+	must := `{"download-image-example":{"name":"download-image-example","method":"GET","url":"https://httpbin.org/image/png","headers":{"Accept":"image/png"}},"get-example":{"name":"get-example","method":"GET","url":"https://httpbin.org/get","params":{"count":"42","foo":"bar"},"headers":{"Accept":"application/json"}},"get-https-insecure":{"name":"get-https-insecure","method":"GET","url":"https://self-signed.badssl.com/","headers":{"Accept":"text/html"},"insecure":true},"post-example":{"name":"post-example","method":"POST","url":"https://httpbin.org/post","payload":{"count":42,"foo":"bar","languages":[{"name":"Python","staticallyTyped":false},{"name":"Javascript","staticallyTyped":false},{"name":"Golang","staticallyTyped":true},{"name":"Rust","staticallyTyped":true}]},"headers":{"Accept":"application/json","Content-Type":"application/json"}}}`
 
 	if must != string(jsonData) {
-		t.Errorf("TestInitDB failed")
+		t.Errorf("TestInitDB failed\ngot:  %s\nwant: %s", string(jsonData), must)
 	}
 }
 
@@ -71,10 +71,10 @@ func TestAddRequest(t *testing.T) {
 
 	jsonData, _ := json.Marshal(database.Data)
 
-	must := `{"foobar":{"name":"foobar","method":"GET","url":"http://localhost:8080/get","params":{"param_1":"amazing"},"headers":{"Authorization":"secret","Useful":"A useful header"}},"get-example":{"name":"get-example","method":"GET","url":"https://httpbin.org/get","params":{"count":"42","foo":"bar"},"headers":{"Accept":"application/json"}},"post-example":{"name":"post-example","method":"POST","url":"https://httpbin.org/post","payload":{"count":42,"foo":"bar","languages":[{"name":"Python","staticallyTyped":false},{"name":"Javascript","staticallyTyped":false},{"name":"Golang","staticallyTyped":true},{"name":"Rust","staticallyTyped":true}]},"headers":{"Accept":"application/json","Content-Type":"application/json"}}}`
+	must := `{"download-image-example":{"name":"download-image-example","method":"GET","url":"https://httpbin.org/image/png","headers":{"Accept":"image/png"}},"foobar":{"name":"foobar","method":"GET","url":"http://localhost:8080/get","params":{"param_1":"amazing"},"headers":{"Authorization":"secret","Useful":"A useful header"}},"get-example":{"name":"get-example","method":"GET","url":"https://httpbin.org/get","params":{"count":"42","foo":"bar"},"headers":{"Accept":"application/json"}},"get-https-insecure":{"name":"get-https-insecure","method":"GET","url":"https://self-signed.badssl.com/","headers":{"Accept":"text/html"},"insecure":true},"post-example":{"name":"post-example","method":"POST","url":"https://httpbin.org/post","payload":{"count":42,"foo":"bar","languages":[{"name":"Python","staticallyTyped":false},{"name":"Javascript","staticallyTyped":false},{"name":"Golang","staticallyTyped":true},{"name":"Rust","staticallyTyped":true}]},"headers":{"Accept":"application/json","Content-Type":"application/json"}}}`
 
 	if must != string(jsonData) {
-		t.Errorf("TestAddRequest failed")
+		t.Errorf("TestAddRequest failed\ngot:  %s\nwant: %s", string(jsonData), must)
 	}
 
 }
@@ -97,9 +97,9 @@ func TestDeleteRequest(t *testing.T) {
 
 	jsonData, _ := json.Marshal(database.Data)
 
-	must := `{"get-example":{"name":"get-example","method":"GET","url":"https://httpbin.org/get","params":{"count":"42","foo":"bar"},"headers":{"Accept":"application/json"}},"post-example":{"name":"post-example","method":"POST","url":"https://httpbin.org/post","payload":{"count":42,"foo":"bar","languages":[{"name":"Python","staticallyTyped":false},{"name":"Javascript","staticallyTyped":false},{"name":"Golang","staticallyTyped":true},{"name":"Rust","staticallyTyped":true}]},"headers":{"Accept":"application/json","Content-Type":"application/json"}}}`
+	must := `{"download-image-example":{"name":"download-image-example","method":"GET","url":"https://httpbin.org/image/png","headers":{"Accept":"image/png"}},"get-example":{"name":"get-example","method":"GET","url":"https://httpbin.org/get","params":{"count":"42","foo":"bar"},"headers":{"Accept":"application/json"}},"get-https-insecure":{"name":"get-https-insecure","method":"GET","url":"https://self-signed.badssl.com/","headers":{"Accept":"text/html"},"insecure":true},"post-example":{"name":"post-example","method":"POST","url":"https://httpbin.org/post","payload":{"count":42,"foo":"bar","languages":[{"name":"Python","staticallyTyped":false},{"name":"Javascript","staticallyTyped":false},{"name":"Golang","staticallyTyped":true},{"name":"Rust","staticallyTyped":true}]},"headers":{"Accept":"application/json","Content-Type":"application/json"}}}`
 
 	if must != string(jsonData) {
-		t.Errorf("TestDeleteRequest failed")
+		t.Errorf("TestDeleteRequest failed\ngot:  %s\nwant: %s", string(jsonData), must)
 	}
 }

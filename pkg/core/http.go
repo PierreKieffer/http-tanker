@@ -4,13 +4,16 @@ import (
 	"bytes"
 	"crypto/tls"
 	"encoding/json"
-	"github.com/PierreKieffer/http-tanker/pkg/color"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/PierreKieffer/http-tanker/pkg/color"
 )
 
 type Response struct {
@@ -20,7 +23,100 @@ type Response struct {
 	Headers               http.Header            `json:"headers,omitempty"`
 	JsonBody              map[string]interface{} `json:"jsonBody,omitempty"`
 	Body                  string                 `json:"body,omitempty"`
+	ContentType           string                 `json:"contentType,omitempty"`
+	BodySize              int64                  `json:"bodySize,omitempty"`
 	ExecutionTimeMillisec int64                  `json:"executionTimeMillisec,omitempty"`
+	savedFile             string
+}
+
+func (r *Response) IsBinaryContent() bool {
+	return r.BodySize > 0 && r.savedFile != ""
+}
+
+func (r *Response) SaveToFile(path string) error {
+	if r.savedFile == "" {
+		return fmt.Errorf("no binary content to save")
+	}
+	// Try rename first (fast, no copy if same filesystem)
+	if err := os.Rename(r.savedFile, path); err == nil {
+		r.savedFile = ""
+		return nil
+	}
+	// Fallback: copy + delete
+	src, err := os.Open(r.savedFile)
+	if err != nil {
+		return err
+	}
+	defer src.Close()
+	dst, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer dst.Close()
+	if _, err := io.Copy(dst, src); err != nil {
+		return err
+	}
+	src.Close()
+	os.Remove(r.savedFile)
+	r.savedFile = ""
+	return nil
+}
+
+func (r *Response) Cleanup() {
+	if r.savedFile != "" {
+		os.Remove(r.savedFile)
+		r.savedFile = ""
+	}
+}
+
+func IsTextContent(contentType string) bool {
+	ct := strings.ToLower(strings.TrimSpace(contentType))
+	if i := strings.Index(ct, ";"); i != -1 {
+		ct = strings.TrimSpace(ct[:i])
+	}
+	if strings.HasPrefix(ct, "text/") {
+		return true
+	}
+	textTypes := []string{
+		"application/json",
+		"application/xml",
+		"application/javascript",
+		"application/x-javascript",
+		"application/ecmascript",
+		"application/xhtml+xml",
+		"application/soap+xml",
+		"application/rss+xml",
+		"application/atom+xml",
+		"application/svg+xml",
+		"application/x-www-form-urlencoded",
+	}
+	for _, t := range textTypes {
+		if ct == t {
+			return true
+		}
+	}
+	if strings.HasSuffix(ct, "+json") || strings.HasSuffix(ct, "+xml") {
+		return true
+	}
+	return false
+}
+
+func formatSize(bytes int64) string {
+	const (
+		KB int64 = 1024
+		MB       = KB * 1024
+		GB       = MB * 1024
+	)
+	switch {
+	case bytes >= GB:
+		return fmt.Sprintf("%.1f GB", float64(bytes)/float64(GB))
+	case bytes >= MB:
+		return fmt.Sprintf("%.1f MB", float64(bytes)/float64(MB))
+	case bytes >= KB:
+		return fmt.Sprintf("%.1f KB", float64(bytes)/float64(KB))
+	default:
+		return fmt.Sprintf("%d B", bytes)
+	}
 }
 
 var (
@@ -90,10 +186,7 @@ func (r *Request) CallHTTP() (Response, error) {
 }
 
 func BuildResponse(resp *http.Response, duration int64) (Response, error) {
-	bodyBytes, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return Response{}, err
-	}
+	contentType := resp.Header.Get("Content-Type")
 
 	response := Response{
 		Status:                resp.Status,
@@ -103,27 +196,51 @@ func BuildResponse(resp *http.Response, duration int64) (Response, error) {
 		ExecutionTimeMillisec: duration,
 	}
 
-	var jsonResponse map[string]interface{}
-	if json.Unmarshal(bodyBytes, &jsonResponse) == nil {
-		response.JsonBody = jsonResponse
+	if IsTextContent(contentType) || contentType == "" {
+		bodyBytes, err := io.ReadAll(resp.Body)
+		if err != nil {
+			return Response{}, err
+		}
+		var jsonResponse map[string]interface{}
+		if json.Unmarshal(bodyBytes, &jsonResponse) == nil {
+			response.JsonBody = jsonResponse
+		} else {
+			response.Body = string(bodyBytes)
+		}
 	} else {
-		response.Body = string(bodyBytes)
+		tmpFile, err := os.CreateTemp("", "http-tanker-*")
+		if err != nil {
+			return Response{}, fmt.Errorf("failed to create temp file: %w", err)
+		}
+		n, err := io.Copy(tmpFile, resp.Body)
+		tmpFile.Close()
+		if err != nil {
+			os.Remove(tmpFile.Name())
+			return Response{}, fmt.Errorf("failed to stream response body: %w", err)
+		}
+		response.ContentType = contentType
+		response.BodySize = n
+		response.savedFile = tmpFile.Name()
 	}
 
 	return response, nil
 }
 
 func DisplayResponse(r Response) {
-	statusColor := color.StatusCodeColor(r.StatusCode)
+	style := color.StatusCodeStyle(r.StatusCode)
 	var lines []string
-	lines = append(lines, "Status         : "+statusColor+r.Status+color.ColorReset)
-	lines = append(lines, "Status code    : "+statusColor+strconv.Itoa(r.StatusCode)+color.ColorReset)
+	lines = append(lines, "Status         : "+style.Render(r.Status))
+	lines = append(lines, "Status code    : "+style.Render(strconv.Itoa(r.StatusCode)))
 	lines = append(lines, "Protocol       : "+r.Proto)
 	if len(r.Headers) > 0 {
 		jsonHeaders, _ := json.MarshalIndent(r.Headers, "", "    ")
 		lines = append(lines, "Headers :\n"+string(jsonHeaders))
 	}
-	if r.Body != "" {
+	if r.IsBinaryContent() {
+		lines = append(lines, "Body           : [Binary content]")
+		lines = append(lines, "Content-Type   : "+r.ContentType)
+		lines = append(lines, "Size           : "+formatSize(r.BodySize))
+	} else if r.Body != "" {
 		lines = append(lines, "Body : "+r.Body)
 	} else if r.JsonBody != nil {
 		jsonBody, _ := json.MarshalIndent(r.JsonBody, "", "    ")

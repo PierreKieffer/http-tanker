@@ -3,11 +3,13 @@ package core
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/PierreKieffer/http-tanker/pkg/color"
 	"io"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/PierreKieffer/http-tanker/pkg/color"
+	"github.com/charmbracelet/lipgloss"
 )
 
 type Request struct {
@@ -82,6 +84,14 @@ func (db *Database) loadLocked() error {
 				Insecure: true,
 				Headers: map[string]interface{}{
 					"Accept": "text/html",
+				},
+			},
+			"download-image-example": {
+				Name:   "download-image-example",
+				Method: "GET",
+				URL:    "https://httpbin.org/image/png",
+				Headers: map[string]interface{}{
+					"Accept": "image/png",
 				},
 			},
 			"post-example": {
@@ -190,7 +200,7 @@ func (db *Database) Display(requestName string) {
 
 	var lines []string
 	lines = append(lines, "Name   : "+r.Name)
-	lines = append(lines, "Method : "+color.MethodColor(r.Method)+r.Method+color.ColorReset)
+	lines = append(lines, "Method : "+color.MethodStyle(r.Method).Render(r.Method))
 	lines = append(lines, "URL    : "+r.URL)
 	if len(r.Params) > 0 {
 		jsonParams, _ := json.MarshalIndent(r.Params, "", "    ")
@@ -211,25 +221,26 @@ func (db *Database) Display(requestName string) {
 }
 const BoxWidth = 50
 
-func DrawBox(title string, content []string) {
-	hLine := strings.Repeat("─", BoxWidth)
+var titleBoxStyle = lipgloss.NewStyle().
+	Border(lipgloss.RoundedBorder()).
+	BorderForeground(lipgloss.Color("8")).
+	Foreground(lipgloss.Color("12")).
+	Width(BoxWidth).
+	Padding(0, 1)
 
+func DrawBox(title string, content []string) {
 	// Title box
-	fmt.Printf("%s┌%s┐%s\n", color.ColorGrey, hLine, color.ColorReset)
-	titlePad := BoxWidth - len([]rune(title)) - 1
-	if titlePad < 0 {
-		titlePad = 0
-	}
-	fmt.Printf("%s│%s %s%*s%s│%s\n", color.ColorGrey, color.ColorBlue, title, titlePad, "", color.ColorGrey, color.ColorReset)
-	fmt.Printf("%s└%s┘%s\n", color.ColorGrey, hLine, color.ColorReset)
+	fmt.Println(titleBoxStyle.Render(title))
 
 	// Content
 	for _, line := range content {
 		for _, sub := range strings.Split(line, "\n") {
-			fmt.Printf(" %s%s%s\n", color.ColorWhite, sub, color.ColorReset)
+			fmt.Println(" " + color.White.Render(sub))
 		}
 	}
 
 	// Bottom separator
-	fmt.Printf("%s %s%s\n\n", color.ColorGrey, hLine, color.ColorReset)
+	hLine := strings.Repeat("─", BoxWidth)
+	fmt.Println(color.Grey.Render(" " + hLine))
+	fmt.Println()
 }

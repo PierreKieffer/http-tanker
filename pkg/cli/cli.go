@@ -509,7 +509,7 @@ func (app *App) Create() error {
 			Name: "method",
 			Prompt: &survey.Select{
 				Message: "Method : ",
-				Options: []string{"GET", "POST", "DELETE", "PUT"},
+				Options: []string{"GET", "POST", "DELETE", "PUT", "PATCH"},
 			},
 			Validate: survey.Required,
 		},
@@ -563,7 +563,7 @@ func (app *App) Create() error {
 			},
 		}
 
-	case "POST", "PUT":
+	case "POST", "PUT", "PATCH":
 		dfltPayload := map[string]interface{}{"foo": "bar"}
 		jsonDfltPayload, _ := json.MarshalIndent(dfltPayload, "", "    ")
 		body = []*survey.Question{
@@ -588,34 +588,85 @@ func (app *App) Create() error {
 		}
 	}
 
-	var headers = []*survey.Question{
-		{
-			Name: "headers",
-			Prompt: &survey.Input{
-				Message: fmt.Sprintf("%s \n", `Headers (Enter the headers in json format {"key": "value"}, default = {}) : `),
-				Default: "{}",
-			},
-			Validate: func(val interface{}) error {
-				var jsonData map[string]interface{}
-				err := json.Unmarshal([]byte(val.(string)), &jsonData)
-				if err != nil {
-					return fmt.Errorf("Wrong input format")
-				}
-				return nil
-			},
-		},
-	}
-
-	body = append(body, headers...)
-
 	var bodyAnswers = struct {
 		Params  string
 		Payload string
-		Headers string
 	}{}
 
 	err = survey.Ask(body, &bodyAnswers)
 
+	if err != nil {
+		app.ErrorHandler(err)
+		return err
+	}
+
+	// Ask for authentication
+	var authConfig *core.AuthConfig
+	authTypeAnswer := ""
+	authTypePrompt := &survey.Select{
+		Message: "Authentication :",
+		Options: []string{"None", "Bearer Token", "Basic Auth", "API Key"},
+		Default: "None",
+	}
+	err = survey.AskOne(authTypePrompt, &authTypeAnswer)
+	if err != nil {
+		app.ErrorHandler(err)
+		return err
+	}
+
+	switch authTypeAnswer {
+	case "Bearer Token":
+		var token string
+		err = survey.AskOne(&survey.Password{Message: "Token :"}, &token)
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
+		authConfig = &core.AuthConfig{Type: "bearer", Token: token}
+	case "Basic Auth":
+		var username string
+		err = survey.AskOne(&survey.Input{Message: "Username :"}, &username)
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
+		var password string
+		err = survey.AskOne(&survey.Password{Message: "Password :"}, &password)
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
+		authConfig = &core.AuthConfig{Type: "basic", Username: username, Password: password}
+	case "API Key":
+		var header string
+		err = survey.AskOne(&survey.Input{Message: "Header name :", Default: "X-API-Key"}, &header)
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
+		var key string
+		err = survey.AskOne(&survey.Password{Message: "API Key :"}, &key)
+		if err != nil {
+			app.ErrorHandler(err)
+			return err
+		}
+		authConfig = &core.AuthConfig{Type: "api-key", Key: key, Header: header}
+	}
+
+	// Ask for headers
+	var headersAnswer string
+	headersPrompt := &survey.Input{
+		Message: fmt.Sprintf("%s \n", `Headers (Enter the headers in json format {"key": "value"}, default = {}) : `),
+		Default: "{}",
+	}
+	err = survey.AskOne(headersPrompt, &headersAnswer, survey.WithValidator(func(val interface{}) error {
+		var jsonData map[string]interface{}
+		err := json.Unmarshal([]byte(val.(string)), &jsonData)
+		if err != nil {
+			return fmt.Errorf("Wrong input format")
+		}
+		return nil
+	}))
 	if err != nil {
 		app.ErrorHandler(err)
 		return err
@@ -652,6 +703,7 @@ func (app *App) Create() error {
 		Method:   genericAnswer.Method,
 		URL:      genericAnswer.Url,
 		Insecure: insecureAnswer.Insecure,
+		Auth:     authConfig,
 	}
 
 	switch R.Method {
@@ -664,7 +716,7 @@ func (app *App) Create() error {
 		} else {
 			R.Params = map[string]interface{}{}
 		}
-	case "POST", "PUT":
+	case "POST", "PUT", "PATCH":
 		if bodyAnswers.Payload != "" {
 			var jsonData map[string]interface{}
 			json.Unmarshal([]byte(bodyAnswers.Payload), &jsonData)
@@ -675,9 +727,9 @@ func (app *App) Create() error {
 		}
 	}
 
-	if bodyAnswers.Headers != "" {
+	if headersAnswer != "" {
 		var jsonData map[string]interface{}
-		json.Unmarshal([]byte(bodyAnswers.Headers), &jsonData)
+		json.Unmarshal([]byte(headersAnswer), &jsonData)
 		R.Headers = jsonData
 
 	} else {

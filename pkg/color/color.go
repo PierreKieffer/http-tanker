@@ -37,6 +37,8 @@ func MethodStyle(method string) lipgloss.Style {
 		return Yellow
 	case "DELETE":
 		return Red
+	case "PATCH":
+		return Purple
 	default:
 		return White
 	}

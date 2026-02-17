@@ -12,6 +12,15 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+type AuthConfig struct {
+	Type     string `json:"type"`               // "bearer", "basic", "api-key"
+	Token    string `json:"token,omitempty"`     // pour bearer
+	Username string `json:"username,omitempty"`  // pour basic
+	Password string `json:"password,omitempty"`  // pour basic
+	Key      string `json:"key,omitempty"`       // pour api-key
+	Header   string `json:"header,omitempty"`    // nom du header pour api-key (défaut: "X-API-Key")
+}
+
 type Request struct {
 	Name     string                 `json:"name"`
 	Method   string                 `json:"method"`
@@ -20,6 +29,7 @@ type Request struct {
 	Payload  map[string]interface{} `json:"payload,omitempty"`
 	Headers  map[string]interface{} `json:"headers"`
 	Insecure bool                   `json:"insecure,omitempty"`
+	Auth     *AuthConfig            `json:"auth,omitempty"`
 }
 
 type Database struct {
@@ -217,8 +227,29 @@ func (db *Database) Display(requestName string) {
 	if r.Insecure {
 		lines = append(lines, "Insecure : true (TLS verification skipped)")
 	}
+	if r.Auth != nil {
+		switch r.Auth.Type {
+		case "bearer":
+			lines = append(lines, "Auth     : Bearer "+maskSecret(r.Auth.Token))
+		case "basic":
+			lines = append(lines, "Auth     : Basic "+r.Auth.Username+":"+maskSecret(r.Auth.Password))
+		case "api-key":
+			header := r.Auth.Header
+			if header == "" {
+				header = "X-API-Key"
+			}
+			lines = append(lines, "Auth     : API Key ["+header+"] "+maskSecret(r.Auth.Key))
+		}
+	}
 	DrawBox("Request details", lines)
 }
+func maskSecret(s string) string {
+	if len(s) <= 4 {
+		return "****"
+	}
+	return s[:4] + "****"
+}
+
 const BoxWidth = 50
 
 var titleBoxStyle = lipgloss.NewStyle().

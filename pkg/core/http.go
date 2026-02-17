@@ -137,7 +137,7 @@ func (r *Request) CallHTTP() (Response, error) {
 
 	var body io.Reader
 	switch r.Method {
-	case "POST", "PUT":
+	case "POST", "PUT", "PATCH":
 		jsonPayload, err := json.Marshal(r.Payload)
 		if err != nil {
 			return Response{}, err
@@ -165,6 +165,21 @@ func (r *Request) CallHTTP() (Response, error) {
 			if s, ok := v.(string); ok {
 				req.Header.Set(k, s)
 			}
+		}
+	}
+
+	if r.Auth != nil {
+		switch r.Auth.Type {
+		case "bearer":
+			req.Header.Set("Authorization", "Bearer "+r.Auth.Token)
+		case "basic":
+			req.SetBasicAuth(r.Auth.Username, r.Auth.Password)
+		case "api-key":
+			header := r.Auth.Header
+			if header == "" {
+				header = "X-API-Key"
+			}
+			req.Header.Set(header, r.Auth.Key)
 		}
 	}
 
@@ -258,6 +273,22 @@ func (r *Request) CurlCommand() string {
 	}
 	parts = append(parts, "-X", r.Method)
 
+	// Auth
+	if r.Auth != nil {
+		switch r.Auth.Type {
+		case "bearer":
+			parts = append(parts, "-H", "'Authorization: Bearer "+r.Auth.Token+"'")
+		case "basic":
+			parts = append(parts, "-u", "'"+r.Auth.Username+":"+r.Auth.Password+"'")
+		case "api-key":
+			header := r.Auth.Header
+			if header == "" {
+				header = "X-API-Key"
+			}
+			parts = append(parts, "-H", "'"+header+": "+r.Auth.Key+"'")
+		}
+	}
+
 	// Build URL with query params
 	targetURL := r.URL
 	if len(r.Params) > 0 {
@@ -282,7 +313,7 @@ func (r *Request) CurlCommand() string {
 
 	// Body for POST/PUT
 	switch r.Method {
-	case "POST", "PUT":
+	case "POST", "PUT", "PATCH":
 		if len(r.Payload) > 0 {
 			jsonPayload, _ := json.Marshal(r.Payload)
 			parts = append(parts, "-d", "'"+string(jsonPayload)+"'")

@@ -147,16 +147,22 @@ func sendRequestHandler(db *core.Database) server.ToolHandlerFunc {
 
 func sendCustomRequestTool() mcp.Tool {
 	return mcp.NewTool("send_custom_request",
-		mcp.WithDescription("Execute an ad-hoc HTTP request without saving it. For binary responses (images, PDFs, archives...), only metadata is returned. Use output_file to save binary content to disk."),
+		mcp.WithDescription("Execute an ad-hoc HTTP request without saving it. For binary responses (images, PDFs, archives...), only metadata is returned. Use output_file to save binary content to disk. When authentication is needed, prefer using the auth_* fields (auth_type, auth_token, etc.) instead of manually setting Authorization headers."),
 		mcp.WithDestructiveHintAnnotation(false),
 		mcp.WithOpenWorldHintAnnotation(true),
-		mcp.WithString("method", mcp.Required(), mcp.Description("HTTP method"), mcp.Enum("GET", "POST", "PUT", "DELETE")),
+		mcp.WithString("method", mcp.Required(), mcp.Description("HTTP method"), mcp.Enum("GET", "POST", "PUT", "DELETE", "PATCH")),
 		mcp.WithString("url", mcp.Required(), mcp.Description("Target URL")),
 		mcp.WithString("params", mcp.Description("Query parameters as a JSON object string, e.g. {\"key\": \"value\"}")),
-		mcp.WithString("payload", mcp.Description("Request body as a JSON object string (for POST/PUT)")),
+		mcp.WithString("payload", mcp.Description("Request body as a JSON object string (for POST/PUT/PATCH)")),
 		mcp.WithString("headers", mcp.Description("HTTP headers as a JSON object string, e.g. {\"Content-Type\": \"application/json\"}")),
 		mcp.WithBoolean("insecure", mcp.Description("Skip TLS certificate verification (default: false)")),
 		mcp.WithString("output_file", mcp.Description("File path to save binary response content (e.g. /tmp/image.png). Only used for binary responses.")),
+		mcp.WithString("auth_type", mcp.Description("Authentication type: bearer, basic, or api-key")),
+		mcp.WithString("auth_token", mcp.Description("Bearer token (when auth_type is bearer)")),
+		mcp.WithString("auth_username", mcp.Description("Username (when auth_type is basic)")),
+		mcp.WithString("auth_password", mcp.Description("Password (when auth_type is basic)")),
+		mcp.WithString("auth_key", mcp.Description("API key value (when auth_type is api-key)")),
+		mcp.WithString("auth_header", mcp.Description("Header name for API key (default: X-API-Key, when auth_type is api-key)")),
 	)
 }
 
@@ -190,6 +196,7 @@ func sendCustomRequestHandler(db *core.Database) server.ToolHandlerFunc {
 		if r.Headers == nil {
 			r.Headers = map[string]interface{}{}
 		}
+		r.Auth = parseAuth(request)
 
 		resp, err := r.CallHTTP()
 		if err != nil {
@@ -205,16 +212,22 @@ func sendCustomRequestHandler(db *core.Database) server.ToolHandlerFunc {
 
 func saveRequestTool() mcp.Tool {
 	return mcp.NewTool("save_request",
-		mcp.WithDescription("Save a new HTTP request to the database. This tool overwrites any existing request with the same name. Before calling this tool, you MUST ask the user if they want to add query parameters, a request body (payload), and/or headers. Always propose these optional fields explicitly during the creation workflow, even though they are not required."),
+		mcp.WithDescription("Save a new HTTP request to the database. This tool overwrites any existing request with the same name. Before calling this tool, you MUST ask the user if they want to add query parameters, a request body (payload), authentication (auth_type, auth_token, etc.), and/or headers. Always propose authentication before headers to avoid the user manually setting auth headers. Always propose these optional fields explicitly during the creation workflow, even though they are not required."),
 		mcp.WithDestructiveHintAnnotation(false),
 		mcp.WithOpenWorldHintAnnotation(false),
 		mcp.WithString("name", mcp.Required(), mcp.Description("Unique name for the request")),
-		mcp.WithString("method", mcp.Required(), mcp.Description("HTTP method"), mcp.Enum("GET", "POST", "PUT", "DELETE")),
+		mcp.WithString("method", mcp.Required(), mcp.Description("HTTP method"), mcp.Enum("GET", "POST", "PUT", "DELETE", "PATCH")),
 		mcp.WithString("url", mcp.Required(), mcp.Description("Target URL")),
 		mcp.WithString("params", mcp.Description("Query parameters as a JSON object string")),
-		mcp.WithString("payload", mcp.Description("Request body as a JSON object string (for POST/PUT)")),
+		mcp.WithString("payload", mcp.Description("Request body as a JSON object string (for POST/PUT/PATCH)")),
 		mcp.WithString("headers", mcp.Description("HTTP headers as a JSON object string")),
 		mcp.WithBoolean("insecure", mcp.Description("Skip TLS certificate verification (default: false)")),
+		mcp.WithString("auth_type", mcp.Description("Authentication type: bearer, basic, or api-key")),
+		mcp.WithString("auth_token", mcp.Description("Bearer token (when auth_type is bearer)")),
+		mcp.WithString("auth_username", mcp.Description("Username (when auth_type is basic)")),
+		mcp.WithString("auth_password", mcp.Description("Password (when auth_type is basic)")),
+		mcp.WithString("auth_key", mcp.Description("API key value (when auth_type is api-key)")),
+		mcp.WithString("auth_header", mcp.Description("Header name for API key (default: X-API-Key, when auth_type is api-key)")),
 	)
 }
 
@@ -253,6 +266,7 @@ func saveRequestHandler(db *core.Database) server.ToolHandlerFunc {
 		if r.Headers == nil {
 			r.Headers = map[string]interface{}{}
 		}
+		r.Auth = parseAuth(request)
 
 		if err := db.Load(); err != nil {
 			return nil, fmt.Errorf("failed to load database: %w", err)
@@ -361,6 +375,34 @@ func formatResponseResult(resp core.Response, outputFile string) (*mcp.CallToolR
 		return mcp.NewToolResultJSON(result)
 	}
 	return mcp.NewToolResultJSON(resp)
+}
+
+func parseAuth(request mcp.CallToolRequest) *core.AuthConfig {
+	authType := request.GetString("auth_type", "")
+	if authType == "" {
+		return nil
+	}
+	switch authType {
+	case "bearer":
+		return &core.AuthConfig{
+			Type:  "bearer",
+			Token: request.GetString("auth_token", ""),
+		}
+	case "basic":
+		return &core.AuthConfig{
+			Type:     "basic",
+			Username: request.GetString("auth_username", ""),
+			Password: request.GetString("auth_password", ""),
+		}
+	case "api-key":
+		return &core.AuthConfig{
+			Type:   "api-key",
+			Key:    request.GetString("auth_key", ""),
+			Header: request.GetString("auth_header", "X-API-Key"),
+		}
+	default:
+		return nil
+	}
 }
 
 func parseOptionalJSON(request mcp.CallToolRequest, key string, target *map[string]interface{}) error {

@@ -1,8 +1,7 @@
- http-tanker is a CLI application used for API testing. 
+ http-tanker is a lightweight terminal HTTP client for API testing.
 
- http-tanker embeds an API client to explore, test and debugs your APIs. 
- Through http-tanker you can easily create, manage and execute http requests from the terminal.
+ Create, manage and execute HTTP requests directly from your terminal.
+ Includes a built-in MCP server for AI assistant integration.
 
-
-
- source : https://github.com/PierreKieffer/http-tanker
+ source: https://github.com/PierreKieffer/http-tanker
+ docs:   https://pierrekieffer.github.io/http-tanker/

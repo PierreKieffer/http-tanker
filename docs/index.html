@@ -282,8 +282,11 @@ cd http-tanker
 <span class="token-command">?</span> URL :  <span class="token-value">https://foobar/post</span>
 <span class="token-command">?</span> Payload <span class="token-label">(Enter the payload in json format {"key": "value"})</span> :
  <span class="token-label">[Enter to launch editor]</span>
+<span class="token-command">?</span> Authentication :  <span class="token-value">Basic Auth</span>
+<span class="token-command">?</span> Username :  <span class="token-value">john</span>
+<span class="token-command">?</span> Password :  <span class="token-value">****</span>
 <span class="token-command">?</span> Headers <span class="token-label">(Enter the headers in json format {"key": "value"}, default = {})</span> :
- <span class="token-value">{"Content-type": "application/json"}</span>
+ <span class="token-value">{"Content-Type": "application/json"}</span>
 <span class="token-command">?</span> Skip TLS certificate verification ? <span class="token-label">(y/N)</span> <span class="token-value">y</span></pre>
         </div>
       </div>
@@ -312,6 +315,7 @@ cd http-tanker
  {
      <span class="token-key">"Content-type"</span>: <span class="token-value">"application/json"</span>
  }
+ <span class="token-label">Auth</span>     : Basic john:<span class="token-value">****</span>
  <span class="token-label">Insecure</span> : <span class="token-flag">true</span> (TLS verification skipped)
  ──────────────────────────────────────────────────
 

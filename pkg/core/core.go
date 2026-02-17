@@ -224,9 +224,6 @@ func (db *Database) Display(requestName string) {
 		jsonHeaders, _ := json.MarshalIndent(r.Headers, "", "    ")
 		lines = append(lines, "Headers :\n"+string(jsonHeaders))
 	}
-	if r.Insecure {
-		lines = append(lines, "Insecure : true (TLS verification skipped)")
-	}
 	if r.Auth != nil {
 		switch r.Auth.Type {
 		case "bearer":
@@ -240,6 +237,9 @@ func (db *Database) Display(requestName string) {
 			}
 			lines = append(lines, "Auth     : API Key ["+header+"] "+maskSecret(r.Auth.Key))
 		}
+	}
+	if r.Insecure {
+		lines = append(lines, "Insecure : true (TLS verification skipped)")
 	}
 	DrawBox("Request details", lines)
 }

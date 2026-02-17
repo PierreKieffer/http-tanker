@@ -133,6 +133,14 @@ section {
   margin-bottom: 48px;
 }
 
+.section-warning {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin-top: -36px;
+  margin-bottom: 32px;
+  opacity: 0.8;
+}
+
 /* ── Hero ── */
 .hero {
   min-height: 100vh;

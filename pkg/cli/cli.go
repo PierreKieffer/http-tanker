@@ -912,7 +912,7 @@ func Banner() {
 	hLine := strings.Repeat("─", core.BoxWidth)
 	fmt.Println(color.Grey.Render(" " + hLine))
 	fmt.Print(string(bannerBytes))
-	fmt.Println(color.Grey.Render(fmt.Sprintf(" version : %v", version)))
+	fmt.Println(color.Grey.Render(fmt.Sprintf(" version: %v", version)))
 	fmt.Println(color.Grey.Render(" " + hLine))
 	fmt.Println()
 }

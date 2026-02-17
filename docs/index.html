@@ -125,7 +125,10 @@
           </div>
           <pre><span class="token-comment"># Example for macOS arm64</span>
 cp tanker-v0.0.1-darwin-arm64 /usr/local/bin/tanker
-chmod +x /usr/local/bin/tanker</pre>
+chmod +x /usr/local/bin/tanker
+
+<span class="token-comment"># macOS: remove quarantine flag (macOS blocks unsigned binaries downloaded from the internet)</span>
+xattr -d com.apple.quarantine /usr/local/bin/tanker</pre>
         </div>
       </div>
 

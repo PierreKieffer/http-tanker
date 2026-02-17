@@ -12,7 +12,7 @@ A lightweight terminal HTTP client for API testing.
 
 Create, manage and execute HTTP requests directly from your terminal. Includes a built-in MCP server for AI assistant integration.
 
-[Documentation & Examples](<!-- TODO: add GitHub Pages URL -->)
+[Documentation & Examples](https://pierrekieffer.github.io/http-tanker/)
 
 </div>
 

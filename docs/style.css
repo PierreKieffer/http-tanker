@@ -35,6 +35,7 @@ body {
   color: var(--text-primary);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
 
 a {
@@ -270,6 +271,8 @@ section {
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 28px;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .install-panel h3 {

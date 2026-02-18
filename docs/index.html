@@ -190,16 +190,24 @@ cd http-tanker
       </div>
 
       <div>
-        <p>Start the MCP server for AI assistant integration:</p>
+        <p>Configure your AI assistant to use http-tanker as an MCP server:</p>
         <div class="code-block">
           <div class="code-block-header">
-            <span>bash</span>
+            <span>json</span>
             <button class="copy-btn">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg>
               Copy
             </button>
           </div>
-          <pre>tanker <span class="token-flag">--mcp</span></pre>
+          <pre>{
+  <span class="token-key">"mcpServers"</span>: {
+    <span class="token-key">"http-tanker"</span>: {
+      <span class="token-key">"type"</span>: <span class="token-value">"stdio"</span>,
+      <span class="token-key">"command"</span>: <span class="token-value">"/path/to/tanker"</span>,
+      <span class="token-key">"args"</span>: [<span class="token-value">"--mcp"</span>]
+    }
+  }
+}</pre>
         </div>
       </div>
 
@@ -428,6 +436,8 @@ cd http-tanker
       http-tanker includes a built-in <a href="https://modelcontextprotocol.io/" target="_blank" rel="noopener">MCP</a> (Model Context Protocol) server, allowing AI assistants like Claude to manage and execute your HTTP requests through natural language.
     </p>
 
+    <p class="section-warning">&#9888; Be cautious when using authentication fields (tokens, passwords, API keys) through an AI agent you don't self-host &mdash; your credentials will be visible to the model provider.</p>
+
     <div class="tools-table-wrapper">
       <table class="tools-table">
         <thead>
@@ -472,7 +482,6 @@ cd http-tanker
   <div class="container">
     <h2 class="section-title">MCP Examples</h2>
     <p class="section-subtitle">Interact with http-tanker through your AI assistant</p>
-    <p class="section-warning">&#9888; Be cautious when using authentication fields (tokens, passwords, API keys) through an AI agent you don't self-host &mdash; your credentials will be visible to the model provider.</p>
     <div class="mcp-examples-blocks">
 
       <!-- List requests -->
